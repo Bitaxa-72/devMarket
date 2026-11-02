@@ -68,6 +68,7 @@ test('product page presents a working gallery and category portfolio before purc
       expression: `(async () => {
         const gallery = document.querySelector('.product-gallery');
         const order = document.querySelector('.product-detail__order');
+        const description = document.querySelector('.product-detail__description');
         const info = document.querySelector('.product-detail__main');
         const related = document.querySelector('.product-related');
         const image = gallery?.querySelector('.product-gallery__image');
@@ -76,6 +77,7 @@ test('product page presents a working gallery and category portfolio before purc
         await new Promise((resolve) => setTimeout(resolve, 80));
         const galleryRect = gallery?.getBoundingClientRect();
         const orderRect = order?.getBoundingClientRect();
+        const descriptionRect = description?.getBoundingClientRect();
         const infoRect = info?.getBoundingClientRect();
         const relatedRect = related?.getBoundingClientRect();
         return {
@@ -84,7 +86,10 @@ test('product page presents a working gallery and category portfolio before purc
           hasThumbnails: Boolean(gallery?.querySelector('.product-gallery__thumbnails')),
           imageChanged: Boolean(initialImage && image?.src && initialImage !== image.src),
           galleryLeftOfOrder: Boolean(galleryRect && orderRect && galleryRect.right < orderRect.left),
-          infoBelowShowcase: Boolean(infoRect && galleryRect && orderRect && infoRect.top >= Math.min(galleryRect.bottom, orderRect.bottom)),
+          descriptionExists: Boolean(description),
+          descriptionHasContent: Boolean(description?.textContent?.includes('О решении') && description?.querySelectorAll('dt').length === 3),
+          descriptionBelowShowcase: Boolean(descriptionRect && galleryRect && orderRect && descriptionRect.top >= Math.min(galleryRect.bottom, orderRect.bottom)),
+          infoBelowDescription: Boolean(infoRect && descriptionRect && infoRect.top >= descriptionRect.bottom),
           relatedBelowInfo: Boolean(relatedRect && infoRect && relatedRect.top >= infoRect.bottom),
           relatedLinks: [...(related?.querySelectorAll('.portfolio-card') || [])].map((link) => link.getAttribute('href')),
         };
@@ -100,7 +105,10 @@ test('product page presents a working gallery and category portfolio before purc
     assert.equal(state.hasThumbnails, false);
     assert.equal(state.imageChanged, true);
     assert.equal(state.galleryLeftOfOrder, true);
-    assert.equal(state.infoBelowShowcase, true);
+    assert.equal(state.descriptionExists, true);
+    assert.equal(state.descriptionHasContent, true);
+    assert.equal(state.descriptionBelowShowcase, true);
+    assert.equal(state.infoBelowDescription, true);
     assert.equal(state.relatedBelowInfo, true);
     assert.ok(state.relatedLinks.length >= 1);
     assert.ok(state.relatedLinks.every((href) => href?.startsWith('/projects/project-')));

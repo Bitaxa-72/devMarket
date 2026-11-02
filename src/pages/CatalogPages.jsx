@@ -53,6 +53,7 @@ export function ProductPage() {
 
   const gallery = getProductGallery(product.categoryId);
   const relatedProjects = getRelatedProjects(product.categoryId);
+  const categoryDetails = catalogCategoryDetails[product.categoryId];
 
   return (
     <main>
@@ -71,6 +72,19 @@ export function ProductPage() {
               <button className="ui-button ui-button--outline" type="button" onClick={onOpenContacts}>Обсудить задачу</button>
             </aside>
           </div>
+          <section className="product-detail__description">
+            <div className="product-detail__description-copy">
+              <span className="section-label">О решении</span>
+              <h2>{product.title} для вашего бизнеса</h2>
+              <p>{product.description}</p>
+              <p>{categoryDetails.overview}</p>
+            </div>
+            <dl className="product-detail__description-facts">
+              <div><dt>Кому подходит</dt><dd>{categoryDetails.audience}</dd></div>
+              <div><dt>Решает задачу</dt><dd>{categoryDetails.task}</dd></div>
+              <div><dt>Результат</dt><dd>{categoryDetails.result}</dd></div>
+            </dl>
+          </section>
           <div className="product-detail__main">
             <span className="section-label">Что входит</span>
             <h2>Готовая основа для запуска</h2>
