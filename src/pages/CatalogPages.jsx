@@ -18,7 +18,9 @@ export function CatalogPage() {
 
   return (
     <main>
-      <PageHero title="Готовые цифровые решения" breadcrumbs={[{ label: 'Каталог' }]} compact />
+      <PageHero title="Готовые цифровые решения" breadcrumbs={[{ label: 'Каталог' }]} compact>
+        <span className="catalog-page__result-count">Найдено {visibleProducts.length}</span>
+      </PageHero>
       <section className="catalog-page">
         <div className="catalog-page__container">
           <aside className="catalog-page__sidebar">
@@ -29,10 +31,6 @@ export function CatalogPage() {
             ))}
           </aside>
           <div className="catalog-page__content">
-            <div className="catalog-page__heading">
-              <h2>{activeCategory === 'all' ? 'Все решения' : catalogCategoryDetails[activeCategory].title}</h2>
-              <span>Найдено {visibleProducts.length}</span>
-            </div>
             {activeCategory !== 'all' && <div className="catalog-page__subcategories">{catalogCategoryDetails[activeCategory].subcategories.map((item) => <span key={item}>{item}</span>)}</div>}
             <div className="catalog-page__grid">{visibleProducts.map((product) => <ProductCard product={product} onAddToCart={addToCart} key={product.slug} />)}</div>
           </div>
