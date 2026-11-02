@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { ContactModal } from './ContactModal';
+import { CookieConsent } from './CookieConsent';
 import { Footer } from './Footer';
 import { Header } from './Header';
 import { TrustBand } from './TrustBand';
@@ -96,6 +97,7 @@ export function SiteLayout() {
       {location.pathname !== '/' && !isLoginPage && <TrustBand />}
       {!isLoginPage && <Footer onOpenContacts={openContacts} />}
       <ContactModal isOpen={isContactsOpen} onClose={() => setIsContactsOpen(false)} subject={contactSubject} />
+      <CookieConsent />
     </>
   );
 }
