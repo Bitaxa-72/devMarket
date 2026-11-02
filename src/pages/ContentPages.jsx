@@ -16,7 +16,7 @@ export function ProjectsPage() {
 
   return (
     <main>
-      <PageHero eyebrow="Портфолио" title="Проекты, которые уже работают" text="Показываем не только интерфейс, но и задачу, подход и результат для бизнеса." breadcrumbs={[{ label: 'Наши проекты' }]} compact />
+      <PageHero title="Проекты, которые уже работают" breadcrumbs={[{ label: 'Наши проекты' }]} compact />
       <section className="portfolio-page">
         <div className="portfolio-page__container">
           <div className="filter-tabs">{categories.map((category) => <button className={activeCategory === category ? 'filter-tabs__button filter-tabs__button--active' : 'filter-tabs__button'} type="button" key={category} onClick={() => setActiveCategory(category)}>{category}</button>)}</div>
@@ -49,12 +49,12 @@ export function ProjectPage() {
   }, [gallery.length, projectSlug]);
 
   if (!project) {
-    return <main><PageHero eyebrow="Портфолио" title="Проект не найден" breadcrumbs={[{ label: 'Наши проекты', to: '/projects' }, { label: 'Не найдено' }]} compact /><div className="state-page"><Link className="ui-button ui-button--primary" to="/projects">Вернуться к проектам</Link></div></main>;
+    return <main><PageHero title="Проект не найден" breadcrumbs={[{ label: 'Наши проекты', to: '/projects' }, { label: 'Не найдено' }]} compact /><div className="state-page"><Link className="ui-button ui-button--primary" to="/projects">Вернуться к проектам</Link></div></main>;
   }
 
   return (
     <main>
-      <PageHero eyebrow={project.category} title={project.title} text={project.description} breadcrumbs={[{ label: 'Наши проекты', to: '/projects' }, { label: project.title }]}>
+      <PageHero title={project.title} breadcrumbs={[{ label: 'Наши проекты', to: '/projects' }, { label: project.title }]}>
         <div className="case-result"><span>Стоимость разработки</span><strong>{project.price}</strong><small>{project.result} · {project.year}</small></div>
       </PageHero>
       <section className="case-page">
@@ -86,7 +86,7 @@ export function PromotionsPage() {
 
   return (
     <main>
-      <PageHero eyebrow="Акции" title="Выгодные условия для запуска" text="Специальные предложения для новых проектов и комплексных задач." breadcrumbs={[{ label: 'Акции' }]} compact />
+      <PageHero title="Выгодные условия для запуска" breadcrumbs={[{ label: 'Акции' }]} compact />
       <section className="promotions-page">
         <div className="promotions-page__container">
           {promotions.map((promotion, index) => (
@@ -142,7 +142,7 @@ export function NewsPage() {
 
   return (
     <main>
-      <PageHero eyebrow="Медиа" title="Новости и полезные материалы" text="Практика разработки, автоматизации и запуска цифровых продуктов." breadcrumbs={[{ label: 'Новости' }]} compact />
+      <PageHero title="Новости и полезные материалы" breadcrumbs={[{ label: 'Новости' }]} compact />
       <section className="articles-page">
         <div className="articles-page__container">
           <div className="articles-page__categories filter-tabs" aria-label="Категории новостей">
@@ -163,12 +163,12 @@ export function ArticlePage() {
   const article = publications.find((item) => item.slug === articleSlug);
 
   if (!article) {
-    return <main><PageHero eyebrow="Новости" title="Материал не найден" breadcrumbs={[{ label: 'Новости', to: '/news' }, { label: 'Не найдено' }]} compact /><div className="state-page"><Link className="ui-button ui-button--primary" to="/news">Вернуться к новостям</Link></div></main>;
+    return <main><PageHero title="Материал не найден" breadcrumbs={[{ label: 'Новости', to: '/news' }, { label: 'Не найдено' }]} compact /><div className="state-page"><Link className="ui-button ui-button--primary" to="/news">Вернуться к новостям</Link></div></main>;
   }
 
   return (
     <main>
-      <PageHero eyebrow={article.category} title={article.title} text={article.excerpt} breadcrumbs={[{ label: 'Новости', to: '/news' }, { label: article.title }]} compact />
+      <PageHero title={article.title} breadcrumbs={[{ label: 'Новости', to: '/news' }, { label: article.title }]} compact />
       <article className="article-page">
         <div className="article-page__meta"><time dateTime={article.dateTime}>{article.date}</time><span><Clock3 size={15} />{article.readingTime}</span><span><Eye size={15} />{article.views}</span></div>
         <div className={`article-page__cover article-page__cover--${article.accent}`}><Tag size={78} strokeWidth={1.3} /></div>

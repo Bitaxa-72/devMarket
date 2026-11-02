@@ -62,12 +62,20 @@ test('inner page introductions stay compact and expose primary content in the fi
           const hero = document.querySelector('.page-hero')?.getBoundingClientRect();
           const primary = document.querySelector('${primarySelector}')?.getBoundingClientRect();
           const purchase = document.querySelector('.product-detail__order .ui-button--primary')?.getBoundingClientRect();
+          const heroNode = document.querySelector('.page-hero');
+          const breadcrumb = document.querySelector('.page-hero__breadcrumbs');
+          const accent = document.querySelector('.page-hero__divider-accent');
           return {
             heroHeight: hero?.height,
             primaryTop: primary?.top,
             purchaseBottom: purchase?.bottom,
-            breadcrumbsVisible: Boolean(document.querySelector('.page-hero__breadcrumbs')?.getClientRects().length),
+            breadcrumbsVisible: Boolean(breadcrumb?.getClientRects().length),
+            breadcrumbSize: parseFloat(getComputedStyle(breadcrumb).fontSize),
+            homeIconVisible: Boolean(document.querySelector('.page-hero__home-icon')?.getClientRects().length),
+            accentVisible: Boolean(accent?.getClientRects().length),
+            backgroundColor: getComputedStyle(heroNode).backgroundColor,
             eyebrowVisible: Boolean(document.querySelector('.page-hero__eyebrow')?.getClientRects().length),
+            descriptionVisible: Boolean(document.querySelector('.page-hero__text')?.getClientRects().length),
             titleVisible: Boolean(document.querySelector('.page-hero__title')?.getClientRects().length),
           };
         })()`,
@@ -79,11 +87,20 @@ test('inner page introductions stay compact and expose primary content in the fi
     const catalog = await inspectPage('/catalog', '.catalog-page__grid');
     const product = await inspectPage('/product/bots-1', '.product-gallery');
     const services = await inspectPage('/services', '.services-page__container');
+    const projects = await inspectPage('/projects', '.portfolio-page__grid');
+    const promotions = await inspectPage('/promotions', '.promotions-page__container');
+    const payment = await inspectPage('/payment', '.payment-page__container');
+    const news = await inspectPage('/news', '.articles-page__grid');
 
-    for (const state of [catalog, product, services]) {
+    for (const state of [catalog, product, services, projects, promotions, payment, news]) {
       assert.ok(state.heroHeight <= 180, `page hero is too tall: ${state.heroHeight}px`);
       assert.equal(state.breadcrumbsVisible, true);
+      assert.ok(state.breadcrumbSize >= 13, `breadcrumbs are too small: ${state.breadcrumbSize}px`);
+      assert.equal(state.homeIconVisible, true);
+      assert.equal(state.accentVisible, true);
+      assert.equal(state.backgroundColor, 'rgb(255, 255, 255)');
       assert.equal(state.eyebrowVisible, false);
+      assert.equal(state.descriptionVisible, false);
       assert.equal(state.titleVisible, true);
     }
     assert.ok(catalog.primaryTop <= 470, `catalog cards start too low: ${catalog.primaryTop}px`);

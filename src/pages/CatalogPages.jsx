@@ -18,7 +18,7 @@ export function CatalogPage() {
 
   return (
     <main>
-      <PageHero eyebrow="Каталог" title="Готовые цифровые решения" text="Выберите основу для быстрого запуска. Любой продукт можно адаптировать под процессы, бренд и инфраструктуру вашего бизнеса." breadcrumbs={[{ label: 'Каталог' }]} compact />
+      <PageHero title="Готовые цифровые решения" breadcrumbs={[{ label: 'Каталог' }]} compact />
       <section className="catalog-page">
         <div className="catalog-page__container">
           <aside className="catalog-page__sidebar">
@@ -48,7 +48,7 @@ export function ProductPage() {
   const product = catalogProducts.find((item) => item.slug === productSlug);
 
   if (!product) {
-    return <main><PageHero eyebrow="Каталог" title="Решение не найдено" text="Вернитесь в каталог и выберите доступный продукт." breadcrumbs={[{ label: 'Каталог', to: '/catalog' }, { label: 'Не найдено' }]} compact /><div className="state-page"><Link className="ui-button ui-button--primary" to="/catalog">Перейти в каталог</Link></div></main>;
+    return <main><PageHero title="Решение не найдено" breadcrumbs={[{ label: 'Каталог', to: '/catalog' }, { label: 'Не найдено' }]} compact /><div className="state-page"><Link className="ui-button ui-button--primary" to="/catalog">Перейти в каталог</Link></div></main>;
   }
 
   const gallery = getProductGallery(product.categoryId);
@@ -57,7 +57,7 @@ export function ProductPage() {
 
   return (
     <main>
-      <PageHero eyebrow={product.categoryTitle} title={product.title} text={product.description} breadcrumbs={[{ label: 'Каталог', to: '/catalog' }, { label: product.categoryTitle, to: `/catalog/${product.categoryId}` }, { label: product.title }]} compact />
+      <PageHero title={product.title} breadcrumbs={[{ label: 'Каталог', to: '/catalog' }, { label: product.categoryTitle, to: `/catalog/${product.categoryId}` }, { label: product.title }]} compact />
       <section className="product-detail">
         <div className="product-detail__container">
           <div className="product-detail__showcase">
@@ -106,7 +106,7 @@ export function ServicesPage() {
 
   return (
     <main>
-      <PageHero eyebrow="Услуги" title="Дополнительная экспертиза для вашего продукта" text="Подключаемся точечно или усиливаем проект целой командой — от исследования до поддержки после запуска." breadcrumbs={[{ label: 'Услуги' }]} compact />
+      <PageHero title="Дополнительная экспертиза для вашего продукта" breadcrumbs={[{ label: 'Услуги' }]} compact />
       <section className="services-page">
         <div className="services-page__container">
           {additionalServices.map((service, index) => {

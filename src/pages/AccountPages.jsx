@@ -46,7 +46,7 @@ export function AccountPage() {
 
   return (
     <main>
-      <PageHero eyebrow="Личный кабинет" title="Здравствуйте, Алексей" text="Управляйте заказами, данными и общением с менеджером." breadcrumbs={[{ label: 'Личный кабинет' }]} compact />
+      <PageHero title="Здравствуйте, Алексей" breadcrumbs={[{ label: 'Личный кабинет' }]} compact />
       <section className="account-page">
         <div className="account-page__container">
           <aside className="account-page__sidebar">

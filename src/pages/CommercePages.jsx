@@ -12,7 +12,7 @@ export function PaymentPage() {
 
   return (
     <main>
-      <PageHero eyebrow="Оплата" title="Оплата и документы" text="Информация о способах оплаты, закрывающих документах и пополнении баланса сервиса." breadcrumbs={[{ label: 'Оплата' }]} compact />
+      <PageHero title="Оплата и документы" breadcrumbs={[{ label: 'Оплата' }]} compact />
       <section className="payment-page">
         <div className="payment-page__container">
           <div className="payment-page__content">
@@ -51,7 +51,7 @@ export function CartPage() {
 
   return (
     <main>
-      <PageHero eyebrow="Корзина" title="Ваш заказ" text="Проверьте выбранные решения перед оформлением." breadcrumbs={[{ label: 'Корзина' }]} compact />
+      <PageHero title="Ваш заказ" breadcrumbs={[{ label: 'Корзина' }]} compact />
       <section className="cart-page">
         <div className="cart-page__container">
           {cartItems.length === 0 ? (
@@ -95,12 +95,12 @@ export function CheckoutPage() {
   };
 
   if (!cartItems.length) {
-    return <main><PageHero eyebrow="Оформление" title="Нет товаров для оформления" text="Добавьте решение в корзину и вернитесь к оформлению." breadcrumbs={[{ label: 'Корзина', to: '/cart' }, { label: 'Оформление' }]} compact /><div className="state-page"><Link className="ui-button ui-button--primary" to="/catalog">Перейти в каталог</Link></div></main>;
+    return <main><PageHero title="Нет товаров для оформления" breadcrumbs={[{ label: 'Корзина', to: '/cart' }, { label: 'Оформление' }]} compact /><div className="state-page"><Link className="ui-button ui-button--primary" to="/catalog">Перейти в каталог</Link></div></main>;
   }
 
   return (
     <main>
-      <PageHero eyebrow="Оформление" title="Оформление заказа" text="Оставьте данные — заказ появится в личном кабинете, а мы свяжемся для уточнения деталей." breadcrumbs={[{ label: 'Корзина', to: '/cart' }, { label: 'Оформление' }]} compact />
+      <PageHero title="Оформление заказа" breadcrumbs={[{ label: 'Корзина', to: '/cart' }, { label: 'Оформление' }]} compact />
       <section className="checkout-page">
         <form className="checkout-page__form" onSubmit={submitOrder}>
           <div className="form-section"><span>01</span><div><h2>Тип заказчика</h2><div className="segmented-control"><button className={customerType === 'person' ? 'segmented-control__button segmented-control__button--active' : 'segmented-control__button'} type="button" onClick={() => setCustomerType('person')}>Физическое лицо</button><button className={customerType === 'company' ? 'segmented-control__button segmented-control__button--active' : 'segmented-control__button'} type="button" onClick={() => setCustomerType('company')}>Компания или ИП</button></div></div></div>

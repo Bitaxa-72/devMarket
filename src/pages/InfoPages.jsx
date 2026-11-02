@@ -10,7 +10,7 @@ export function ContactsPage() {
 
   return (
     <main>
-      <PageHero eyebrow="Контакты" title="Работаем удалённо, остаёмся рядом" text="Обсуждаем задачи онлайн, ведём проекты прозрачно и подстраиваем коммуникацию под ваш часовой пояс." breadcrumbs={[{ label: 'Контакты' }]} compact />
+      <PageHero title="Работаем удалённо, остаёмся рядом" breadcrumbs={[{ label: 'Контакты' }]} compact />
       <section className="contacts-page">
         <div className="contacts-page__container">
           <div className="contacts-page__cards">
@@ -53,7 +53,7 @@ export function SearchPage() {
 
   return (
     <main>
-      <PageHero eyebrow="Поиск" title="Результаты поиска" text={initialQuery ? `По запросу «${initialQuery}» найдено: ${results.length}` : 'Введите название услуги, технологии или задачи.'} breadcrumbs={[{ label: 'Поиск' }]} compact />
+      <PageHero title="Результаты поиска" breadcrumbs={[{ label: 'Поиск' }]} compact />
       <section className="search-page">
         <div className="search-page__container">
           <form className="search-page__form" onSubmit={submitSearch}><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Например, Telegram-бот" autoFocus /><button type="submit"><Search size={21} />Найти</button></form>
@@ -87,15 +87,15 @@ const offerSections = [
 ];
 
 export function PrivacyPage() {
-  return <LegalPage eyebrow="Документы" title="Политика конфиденциальности" updated="Редакция от 30 сентября 2026" sections={privacySections} />;
+  return <LegalPage title="Политика конфиденциальности" sections={privacySections} />;
 }
 
 export function OfferPage() {
-  return <LegalPage eyebrow="Документы" title="Публичная оферта" updated="Редакция от 30 сентября 2026" sections={offerSections} />;
+  return <LegalPage title="Публичная оферта" sections={offerSections} />;
 }
 
-function LegalPage({ eyebrow, title, updated, sections }) {
-  return <main><PageHero eyebrow={eyebrow} title={title} text={updated} breadcrumbs={[{ label: title }]} compact /><article className="legal-page"><div className="legal-page__notice">Черновая редакция. Перед публикацией документ необходимо проверить с юристом и дополнить реквизитами исполнителя.</div>{sections.map(([heading, text]) => <section key={heading}><h2>{heading}</h2><p>{text}</p></section>)}</article></main>;
+function LegalPage({ title, sections }) {
+  return <main><PageHero title={title} breadcrumbs={[{ label: title }]} compact /><article className="legal-page"><div className="legal-page__notice">Черновая редакция. Перед публикацией документ необходимо проверить с юристом и дополнить реквизитами исполнителя.</div>{sections.map(([heading, text]) => <section key={heading}><h2>{heading}</h2><p>{text}</p></section>)}</article></main>;
 }
 
 export function NotFoundPage() {
