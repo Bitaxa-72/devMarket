@@ -1,6 +1,6 @@
 import { Route, Routes } from 'react-router-dom';
 import { SiteLayout } from './components/SiteLayout';
-import { AccountPage, LoginPage } from './pages/AccountPages';
+import { AccountOrderPage, AccountPage, AccountPaymentPage, LoginPage } from './pages/AccountPages';
 import { CatalogPage, ProductPage, ServicesPage } from './pages/CatalogPages';
 import { CartPage, CheckoutPage, CheckoutSuccessPage, PaymentPage } from './pages/CommercePages';
 import { ArticlePage, NewsPage, ProjectPage, ProjectsPage, PromotionsPage } from './pages/ContentPages';
@@ -27,6 +27,8 @@ export function App() {
         <Route path="checkout" element={<CheckoutPage />} />
         <Route path="checkout/success" element={<CheckoutSuccessPage />} />
         <Route path="account" element={<AccountPage />} />
+        <Route path="account/orders/:orderId" element={<AccountOrderPage />} />
+        <Route path="account/payment" element={<AccountPaymentPage />} />
         <Route path="login" element={<LoginPage />} />
         <Route path="search" element={<SearchPage />} />
         <Route path="privacy" element={<PrivacyPage />} />
