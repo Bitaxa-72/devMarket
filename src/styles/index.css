@@ -40,11 +40,11 @@ a {
   top: 0;
   z-index: 10;
   background: #ffffff;
-  box-shadow: 0 0 0 rgb(32 36 52 / 0%);
+  box-shadow: 0 7px 22px rgb(32 36 52 / 8%);
   transition: box-shadow 0.25s ease;
 }
 
-.header--compact { box-shadow: 0 10px 28px rgb(32 36 52 / 12%); }
+.header--compact { box-shadow: 0 10px 28px rgb(32 36 52 / 14%); }
 
 .header__container {
   width: min(100% - 48px, 1280px);
