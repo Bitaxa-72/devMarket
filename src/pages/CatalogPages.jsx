@@ -30,8 +30,8 @@ export function CatalogPage() {
           </aside>
           <div className="catalog-page__content">
             <div className="catalog-page__heading">
-              <div><span>Найдено {visibleProducts.length}</span><h2>{activeCategory === 'all' ? 'Все решения' : catalogCategoryDetails[activeCategory].title}</h2></div>
-              {activeCategory !== 'all' && <p>{catalogCategoryDetails[activeCategory].description}</p>}
+              <h2>{activeCategory === 'all' ? 'Все решения' : catalogCategoryDetails[activeCategory].title}</h2>
+              <span>Найдено {visibleProducts.length}</span>
             </div>
             {activeCategory !== 'all' && <div className="catalog-page__subcategories">{catalogCategoryDetails[activeCategory].subcategories.map((item) => <span key={item}>{item}</span>)}</div>}
             <div className="catalog-page__grid">{visibleProducts.map((product) => <ProductCard product={product} onAddToCart={addToCart} key={product.slug} />)}</div>
