@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import termburgImage from '../assets/hero/termburg-desktop.png';
 import hotlineImage from '../assets/portfolio/hotline-service.png';
 import seliboxImage from '../assets/portfolio/selibox.png';
-import { normalizeLoopTrackIndex, wrapSlideIndex } from '../utils/slider';
+import { advanceSlideIndex } from '../utils/slider';
 
 const AUTOPLAY_DELAY = 7000;
 
@@ -42,13 +42,10 @@ const slides = [
 ];
 
 export function HeroSlider({ onOpenContacts }) {
-  const loopedSlides = useMemo(() => [slides[slides.length - 1], ...slides, slides[0]], []);
-  const [trackIndex, setTrackIndex] = useState(1);
-  const [isTransitionEnabled, setIsTransitionEnabled] = useState(true);
+  const [activeIndex, setActiveIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [resetCount, setResetCount] = useState(0);
   const [reduceMotion, setReduceMotion] = useState(false);
-  const activeIndex = wrapSlideIndex(trackIndex - 1, slides.length);
   const activeSlide = slides[activeIndex];
 
   useEffect(() => {
@@ -67,47 +64,31 @@ export function HeroSlider({ onOpenContacts }) {
     }
 
     const timer = window.setTimeout(() => {
-      setTrackIndex((currentIndex) => currentIndex + 1);
+      setActiveIndex((currentIndex) => advanceSlideIndex(currentIndex, 1, slides.length));
     }, AUTOPLAY_DELAY);
 
     return () => window.clearTimeout(timer);
   }, [activeIndex, isPaused, reduceMotion, resetCount]);
 
-  const changeSlide = (nextTrackIndex) => {
-    if (nextTrackIndex < 0 || nextTrackIndex > slides.length + 1) {
-      return;
-    }
-
-    setIsTransitionEnabled(true);
-    setTrackIndex(nextTrackIndex);
+  const changeSlide = (direction) => {
+    setActiveIndex((currentIndex) => advanceSlideIndex(currentIndex, direction, slides.length));
     setResetCount((count) => count + 1);
   };
 
   const selectSlide = (index) => {
-    changeSlide(index + 1);
-  };
-
-  const handleTransitionEnd = () => {
-    if (trackIndex !== 0 && trackIndex !== slides.length + 1) {
-      return;
-    }
-
-    setIsTransitionEnabled(false);
-    setTrackIndex(normalizeLoopTrackIndex(trackIndex, slides.length));
-    window.requestAnimationFrame(() => {
-      window.requestAnimationFrame(() => setIsTransitionEnabled(true));
-    });
+    setActiveIndex(index);
+    setResetCount((count) => count + 1);
   };
 
   const handleKeyDown = (event) => {
     if (event.key === 'ArrowLeft') {
       event.preventDefault();
-      changeSlide(trackIndex - 1);
+      changeSlide(-1);
     }
 
     if (event.key === 'ArrowRight') {
       event.preventDefault();
-      changeSlide(trackIndex + 1);
+      changeSlide(1);
     }
   };
 
@@ -131,23 +112,18 @@ export function HeroSlider({ onOpenContacts }) {
       <svg className="hero-slider__clip-definitions" aria-hidden="true" focusable="false">
         <defs>
           <clipPath id="hero-slider-frame-clip" clipPathUnits="objectBoundingBox">
-            <path d="M .18 0 H 1 V 1 H .18 C .16 1 .15 .98 .15 .95 C .12 .84 0 .64 0 .52 C 0 .48 .12 .16 .15 .05 C .15 .02 .16 0 .18 0 Z" />
+            <path d="M .18 0 H 1 V 1 H .18 C .165 1 .155 .985 .15 .96 L .02 .59 C -.007 .53 -.007 .47 .02 .41 L .15 .04 C .155 .015 .165 0 .18 0 Z" />
           </clipPath>
         </defs>
       </svg>
       <span className="hero-slider__status" aria-live="polite">Слайд {activeIndex + 1} из {slides.length}: {activeSlide.title}</span>
       <div className="hero-slider__viewport">
-        <div
-          className={`hero-slider__track${isTransitionEnabled && !reduceMotion ? ' hero-slider__track--animated' : ''}`}
-          style={{ transform: `translate3d(-${trackIndex * 100}%, 0, 0)` }}
-          onTransitionEnd={handleTransitionEnd}
-        >
-          {loopedSlides.map((slide, index) => {
-            const slideIndex = wrapSlideIndex(index - 1, slides.length);
-            const isActive = slideIndex === activeIndex && index === trackIndex;
+        <div className="hero-slider__track">
+          {slides.map((slide, index) => {
+            const isActive = index === activeIndex;
 
             return (
-              <article className="hero-slider__slide" aria-hidden={!isActive} key={`${slide.id}-${index}`}>
+              <article className={`hero-slider__slide${isActive ? ' hero-slider__slide--active' : ''}`} aria-hidden={!isActive} key={slide.id}>
                 <div className="hero-slider__container">
                   <div className="hero-slider__content">
                     <h1 className="hero-slider__title">{slide.title}</h1>
@@ -172,7 +148,7 @@ export function HeroSlider({ onOpenContacts }) {
         </div>
       </div>
       <div className="hero-slider__navigation">
-        <button className="hero-slider__arrow" type="button" aria-label="Предыдущий слайд" onClick={() => changeSlide(trackIndex - 1)}>
+        <button className="hero-slider__arrow" type="button" aria-label="Предыдущий слайд" onClick={() => changeSlide(-1)}>
           <ChevronLeft size={24} strokeWidth={2.2} aria-hidden="true" />
         </button>
         <div className="hero-slider__pagination" aria-label="Выбор слайда">
@@ -189,7 +165,7 @@ export function HeroSlider({ onOpenContacts }) {
             </button>
           ))}
         </div>
-        <button className="hero-slider__arrow" type="button" aria-label="Следующий слайд" onClick={() => changeSlide(trackIndex + 1)}>
+        <button className="hero-slider__arrow" type="button" aria-label="Следующий слайд" onClick={() => changeSlide(1)}>
           <ChevronRight size={24} strokeWidth={2.2} aria-hidden="true" />
         </button>
       </div>

@@ -1,7 +1,8 @@
 import { Check, Eye, EyeOff, RefreshCw } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { authRequest } from '../lib/auth-api';
+import { getAccountUrl } from '../lib/site-urls';
 import {
   generatePassword,
   getPasswordRequirements,
@@ -103,7 +104,6 @@ function FormMessage({ error, message }) {
 }
 
 export function LoginPage() {
-  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -118,7 +118,7 @@ export function LoginPage() {
         method: 'POST',
         body: JSON.stringify({ email, password }),
       });
-      navigate('/account');
+      window.location.assign(getAccountUrl('/account'));
     } catch (requestError) {
       setError(requestError.message);
     } finally {

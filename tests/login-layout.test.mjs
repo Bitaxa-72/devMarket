@@ -58,6 +58,7 @@ test('login panel fills the available viewport and centers both columns', async 
       const response = await send('Runtime.evaluate', {
         expression: `(() => {
           const header = document.querySelector('.header, .account-site__header')?.getBoundingClientRect();
+          const dock = document.querySelector('.header__mobile-dock')?.getBoundingClientRect();
           const page = document.querySelector('.auth-page')?.getBoundingClientRect();
           const visual = document.querySelector('.auth-page__visual');
           const visualRect = visual?.getBoundingClientRect();
@@ -71,12 +72,15 @@ test('login panel fills the available viewport and centers both columns', async 
             documentWidth: document.documentElement.scrollWidth,
             documentHeight: document.documentElement.scrollHeight,
             headerBottom: header?.bottom,
+            dockTop: dock?.top,
             pageTop: page?.top,
             pageBottom: page?.bottom,
             pageHeight: page?.height,
             visualDisplay: visual && getComputedStyle(visual).display,
             visualCenterGap: visualRect && visualFirst && visualLast ? Math.abs((visualFirst.top + visualLast.bottom) / 2 - (visualRect.top + visualRect.bottom) / 2) : null,
             formCenterGap: formWrap && form ? Math.abs((form.top + form.bottom) / 2 - (formWrap.top + formWrap.bottom) / 2) : null,
+            formTop: form?.top,
+            formBottom: form?.bottom,
           };
         })()`,
         returnByValue: true,
@@ -98,10 +102,12 @@ test('login panel fills the available viewport and centers both columns', async 
     await send('Page.reload');
     await new Promise((resolve) => setTimeout(resolve, 600));
     const mobile = await inspect();
-    assert.ok(Math.abs(mobile.pageTop - mobile.headerBottom) < 1, JSON.stringify(mobile));
-    assert.equal(mobile.pageHeight, mobile.viewportHeight - mobile.headerBottom);
+    assert.equal(mobile.pageTop, 0, JSON.stringify(mobile));
+    assert.equal(mobile.pageHeight, mobile.viewportHeight);
     assert.equal(mobile.visualDisplay, 'none');
     assert.ok(mobile.formCenterGap < 2);
+    assert.ok(mobile.formTop >= mobile.headerBottom, JSON.stringify(mobile));
+    assert.ok(mobile.formBottom <= mobile.dockTop, JSON.stringify(mobile));
     assert.equal(mobile.documentWidth, mobile.viewportWidth);
     assert.equal(mobile.documentHeight, mobile.viewportHeight);
     socket.close();

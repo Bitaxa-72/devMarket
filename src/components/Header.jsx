@@ -2,10 +2,8 @@ import { ChevronDown, ChevronRight, Ellipsis, FileText, FolderKanban, Languages,
 import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { Logo } from './Logo';
-import { getAccountUrl } from '../lib/site-urls';
 
 const navigationItems = [
-  { label: 'Главная', to: '/' },
   { label: 'Услуги', to: '/services' },
   { label: 'Наши проекты', to: '/projects' },
   { label: 'Акции', to: '/promotions' },
@@ -187,7 +185,7 @@ export function Header({ onOpenContacts, cartCount = 0 }) {
             <button className="header__search-button" type="submit" aria-label="Найти"><Search size={22} strokeWidth={2} /></button>
           </form>
           <div className="header__actions">
-            <a className="header__login" href={getAccountUrl('/login')} target="_blank" rel="noreferrer"><LogIn size={18} strokeWidth={2.2} /><span>Войти</span></a>
+            <Link className="header__login" to="/login"><LogIn size={18} strokeWidth={2.2} /><span>Войти</span></Link>
             <div className="header__language">
               <button className="header__language-button" type="button" aria-expanded={isLanguageOpen} onClick={() => setIsLanguageOpen((value) => !value)}><Languages size={19} strokeWidth={2} /><span>{activeLanguage.code}</span><ChevronDown className={`header__language-chevron ${isLanguageOpen ? 'header__language-chevron--open' : ''}`} size={16} strokeWidth={2.4} /></button>
               {languageMenu}
@@ -198,12 +196,13 @@ export function Header({ onOpenContacts, cartCount = 0 }) {
             <button className="header__mobile-language-button" type="button" aria-label="Выбрать язык" aria-expanded={isLanguageOpen} onClick={() => { setIsLanguageOpen((value) => !value); setIsSearchOpen(false); setIsMoreOpen(false); }}><span>{activeLanguage.code}</span><ChevronDown className={`header__language-chevron ${isLanguageOpen ? 'header__language-chevron--open' : ''}`} size={14} strokeWidth={2.4} /></button>
             {languageMenu}
           </div>
-          <a className="header__mobile-login" href={getAccountUrl('/login')} target="_blank" rel="noreferrer" aria-label="Войти в личный кабинет"><LogIn size={18} strokeWidth={2.2} /><span>Войти</span></a>
+          <Link className="header__mobile-login" to="/login" aria-label="Войти в личный кабинет"><LogIn size={18} strokeWidth={2.2} /><span>Войти</span></Link>
         </div>
       </div>
       <div className="header__navigation-wrapper">
         <div className="header__container header__navigation-container">
           <nav className="header__navigation" aria-label="Основная навигация">
+            <NavLink className="header__navigation-link" to="/" onClick={closePanels}>Главная</NavLink>
             <div className="header__catalog" onMouseEnter={() => setIsCatalogOpen(true)} onMouseLeave={() => setIsCatalogOpen(false)}>
               <div className="header__catalog-trigger"><NavLink className={({ isActive }) => `header__catalog-link ${isActive ? 'header__catalog-link--active' : ''}`} to="/catalog" onClick={closePanels}>Каталог</NavLink><button className="header__catalog-toggle" type="button" aria-label="Открыть категории каталога" aria-expanded={isCatalogOpen} onClick={() => setIsCatalogOpen((value) => !value)}><ChevronDown className={`header__catalog-chevron ${isCatalogOpen ? 'header__catalog-chevron--open' : ''}`} size={17} strokeWidth={2.4} /></button></div>
               <div className={`header__catalog-menu ${isCatalogOpen ? 'header__catalog-menu--open' : ''}`}><Link className="header__catalog-menu-link" to="/catalog" onClick={closePanels}>Все решения</Link>{catalogItems.map((item) => <Link className="header__catalog-menu-link" to={item.to} key={item.label} onClick={closePanels}>{item.label}</Link>)}</div>

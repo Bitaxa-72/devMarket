@@ -15,11 +15,16 @@ import { CartPage, CheckoutPage, CheckoutSuccessPage, PaymentPage } from './page
 import { ArticlePage, NewsPage, ProjectPage, ProjectsPage, PromotionsPage } from './pages/ContentPages';
 import { HomePage } from './pages/HomePage';
 import { ContactsPage, NotFoundPage, OfferPage, PrivacyPage, SearchPage } from './pages/InfoPages';
-import { getAccountUrl, isAccountHost, isAccountPath, isLocalHost } from './lib/site-urls';
+import { getAccountUrl, getPublicSiteUrl, isAccountHost, isAccountPath, isLocalHost } from './lib/site-urls';
 
 function ExternalAccountRedirect({ path }) {
   window.location.replace(getAccountUrl(path));
   return <main className="state-page">Открываем личный кабинет…</main>;
+}
+
+function ExternalPublicRedirect({ path }) {
+  window.location.replace(getPublicSiteUrl(path));
+  return <main className="state-page">Открываем страницу входа…</main>;
 }
 
 function AccountRoutes() {
@@ -30,11 +35,11 @@ function AccountRoutes() {
         <Route path="account" element={<RequireAuth><AccountPage /></RequireAuth>} />
         <Route path="account/orders/:orderId" element={<RequireAuth><AccountOrderPage /></RequireAuth>} />
         <Route path="account/payment" element={<RequireAuth><AccountPaymentPage /></RequireAuth>} />
-        <Route path="login" element={<LoginPage />} />
-        <Route path="register" element={<RegisterPage />} />
-        <Route path="forgot-password" element={<ForgotPasswordPage />} />
-        <Route path="reset-password" element={<ResetPasswordPage />} />
-        <Route path="verify-email" element={<VerifyEmailPage />} />
+        <Route path="login" element={<ExternalPublicRedirect path="/login" />} />
+        <Route path="register" element={<ExternalPublicRedirect path="/register" />} />
+        <Route path="forgot-password" element={<ExternalPublicRedirect path="/forgot-password" />} />
+        <Route path="reset-password" element={<ExternalPublicRedirect path="/reset-password" />} />
+        <Route path="verify-email" element={<ExternalPublicRedirect path="/verify-email" />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>
@@ -61,11 +66,11 @@ function PublicRoutes() {
         <Route path="checkout" element={<CheckoutPage />} />
         <Route path="checkout/success" element={<CheckoutSuccessPage />} />
         <Route path="account/*" element={<ExternalAccountRedirect path="/account" />} />
-        <Route path="login" element={<ExternalAccountRedirect path="/login" />} />
-        <Route path="register" element={<ExternalAccountRedirect path="/register" />} />
-        <Route path="forgot-password" element={<ExternalAccountRedirect path="/forgot-password" />} />
-        <Route path="reset-password" element={<ExternalAccountRedirect path="/reset-password" />} />
-        <Route path="verify-email" element={<ExternalAccountRedirect path="/verify-email" />} />
+        <Route path="login" element={<LoginPage />} />
+        <Route path="register" element={<RegisterPage />} />
+        <Route path="forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="reset-password" element={<ResetPasswordPage />} />
+        <Route path="verify-email" element={<VerifyEmailPage />} />
         <Route path="search" element={<SearchPage />} />
         <Route path="privacy" element={<PrivacyPage />} />
         <Route path="offer" element={<OfferPage />} />

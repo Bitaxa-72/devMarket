@@ -10,7 +10,7 @@ export function isLocalHost(hostname) {
 }
 
 export function isAccountPath(pathname) {
-  return /^\/(account(?:\/|$)|login$|register$|forgot-password$|reset-password$|verify-email$)/.test(pathname);
+  return /^\/account(?:\/|$)/.test(pathname);
 }
 
 export function getAccountUrl(path = '/login') {

@@ -8,6 +8,7 @@ const accountLayoutUrl = new URL('../src/components/AccountLayout.jsx', import.m
 const accountLayoutSource = existsSync(accountLayoutUrl) ? readFileSync(accountLayoutUrl, 'utf8') : '';
 const accountPagesSource = readFileSync(new URL('../src/pages/AccountPages.jsx', import.meta.url), 'utf8');
 const commercePagesSource = readFileSync(new URL('../src/pages/CommercePages.jsx', import.meta.url), 'utf8');
+const authPagesSource = readFileSync(new URL('../src/pages/AuthPages.jsx', import.meta.url), 'utf8');
 
 test('account hostname uses an isolated account route tree', () => {
   assert.match(appSource, /isAccountHost\(window\.location\.hostname\)/);
@@ -16,10 +17,18 @@ test('account hostname uses an isolated account route tree', () => {
   assert.match(appSource, /<Navigate replace to="\/account" \/>/);
 });
 
-test('public login opens the account domain in a new tab', () => {
-  assert.match(headerSource, /href=\{getAccountUrl\('\/login'\)\}/);
-  assert.match(headerSource, /target="_blank"/);
-  assert.match(headerSource, /rel="noreferrer"/);
+test('public authentication stays on the main website', () => {
+  assert.match(headerSource, /to="\/login"/);
+  assert.match(appSource, /path="login" element=\{<LoginPage \/>\}/);
+  assert.match(appSource, /path="register" element=\{<RegisterPage \/>\}/);
+});
+
+test('successful login continues on the account subdomain', () => {
+  assert.match(authPagesSource, /window\.location\.assign\(getAccountUrl\('\/account'\)\)/);
+});
+
+test('home navigation is rendered before the catalog', () => {
+  assert.match(headerSource, /to="\/"[^>]*>Главная<\/NavLink>[\s\S]*className="header__catalog"/);
 });
 
 test('account layout links back to the public website', () => {
