@@ -112,7 +112,7 @@ export function HeroSlider({ onOpenContacts }) {
     >
       <span className="hero-slider__status" aria-live="polite">Слайд {activeIndex + 1} из {slides.length}: {activeSlide.title}</span>
       <div className="hero-slider__container">
-        <div className="hero-slider__content" key={`content-${activeSlide.id}`}>
+        <div className="hero-slider__content">
           <h1 className="hero-slider__title">{activeSlide.title}</h1>
           <p className="hero-slider__description">{activeSlide.description}</p>
           <div className="hero-slider__actions">
@@ -150,7 +150,7 @@ export function HeroSlider({ onOpenContacts }) {
             </button>
           </div>
         </div>
-        <div className="hero-slider__visual" key={`visual-${activeSlide.id}`}>
+        <div className="hero-slider__visual">
           <figure className="hero-slider__frame">
             <img className="hero-slider__image" src={activeSlide.image} alt={activeSlide.imageAlt} />
           </figure>
