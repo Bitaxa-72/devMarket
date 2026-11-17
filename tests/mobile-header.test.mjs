@@ -85,7 +85,7 @@ test('mobile header uses a five-item app dock with a matching more drawer', asyn
         const searchExpanded = search.getClientRects().length > 0 && search.getBoundingClientRect().width > 300;
         const searchFocused = document.activeElement === searchInput;
         const searchToggleExpanded = searchToggle?.getAttribute('aria-expanded');
-        document.querySelector('.hero')?.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+        document.querySelector('.hero-slider')?.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
         await new Promise((resolve) => setTimeout(resolve, 50));
         const searchClosedOutside = !search.getClientRects().length && searchToggle?.getAttribute('aria-expanded') === 'false';
         const mobileDock = document.querySelector('.header__mobile-dock');
@@ -107,6 +107,7 @@ test('mobile header uses a five-item app dock with a matching more drawer', asyn
         const legalLinkRect = legalLink?.getBoundingClientRect();
         const legalFontSize = legalLink ? parseFloat(getComputedStyle(legalLink).fontSize) : 0;
         const drawerToggleExpanded = drawerToggle?.getAttribute('aria-expanded');
+        const desktopNavigationLinks = [...document.querySelectorAll('.header__navigation-link')];
         dockContact.click();
         await new Promise((resolve) => setTimeout(resolve, 80));
         const modal = document.querySelector('.contact-modal__content');
@@ -149,6 +150,8 @@ test('mobile header uses a five-item app dock with a matching more drawer', asyn
           drawerClearsDock: drawerRect ? drawerRect.bottom <= dockRect.top - 8 : false,
           drawerLabels: drawerLinks.map((item) => item.textContent.trim()),
           drawerHrefs: drawerLinks.map((item) => item.getAttribute('href')),
+          desktopNavigationLabels: desktopNavigationLinks.map((item) => item.textContent.trim()),
+          desktopNavigationHrefs: desktopNavigationLinks.map((item) => item.getAttribute('href')),
           drawerHandleExists: Boolean(drawer?.querySelector('.header__more-handle')),
           legalLinkIsWide: Boolean(primaryLinkRect && legalLinkRect && legalLinkRect.width > primaryLinkRect.width * 2),
           legalFontSize,
@@ -164,6 +167,10 @@ test('mobile header uses a five-item app dock with a matching more drawer', asyn
     socket.close();
     assert.equal(response.result?.exceptionDetails, undefined, response.result?.exceptionDetails?.exception?.description || 'mobile header evaluation failed');
     const state = response.result.result.value;
+    assert.deepEqual(state.drawerLabels, ['Проекты', 'Новости', 'Акции', 'Политика конфиденциальности', 'Публичная оферта']);
+    assert.deepEqual(state.drawerHrefs, ['/projects', '/news', '/promotions', '/privacy', '/offer']);
+    assert.deepEqual(state.desktopNavigationLabels, ['Главная', 'Услуги', 'Наши проекты', 'Акции', 'Новости']);
+    assert.deepEqual(state.desktopNavigationHrefs, ['/', '/services', '/projects', '/promotions', '/news']);
     assert.ok(state.initialHeaderTopHeight <= 68, 'mobile top panel is too tall');
     assert.equal(state.compactHeaderTopHeight, state.initialHeaderTopHeight, 'mobile top panel changes height after scrolling');
     assert.ok(state.initialHeaderTopRadius >= 18, 'mobile top panel has no visible rounding');
@@ -197,8 +204,6 @@ test('mobile header uses a five-item app dock with a matching more drawer', asyn
     assert.equal(state.drawerToggleExpanded, 'true');
     assert.equal(state.moreSheetExists, true);
     assert.equal(state.drawerClearsDock, true);
-    assert.deepEqual(state.drawerLabels, ['Проекты', 'Новости', 'Акции', 'Оплата', 'Политика конфиденциальности', 'Публичная оферта']);
-    assert.deepEqual(state.drawerHrefs, ['/projects', '/news', '/promotions', '/payment', '/privacy', '/offer']);
     assert.equal(state.drawerHandleExists, true);
     assert.equal(state.legalLinkIsWide, true);
     assert.ok(state.legalFontSize >= 12, 'legal links are too small to read');

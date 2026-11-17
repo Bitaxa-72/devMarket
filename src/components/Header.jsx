@@ -1,13 +1,13 @@
-import { ChevronDown, ChevronRight, Ellipsis, FileText, FolderKanban, Languages, LayoutGrid, LogIn, MessageCircle, Newspaper, Percent, Search, ShieldCheck, ShoppingCart, WalletCards, Wrench, X } from 'lucide-react';
+import { ChevronDown, ChevronRight, Ellipsis, FileText, FolderKanban, Languages, LayoutGrid, LogIn, MessageCircle, Newspaper, Percent, Search, ShieldCheck, ShoppingCart, Wrench, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { Logo } from './Logo';
 
 const navigationItems = [
+  { label: 'Главная', to: '/' },
   { label: 'Услуги', to: '/services' },
   { label: 'Наши проекты', to: '/projects' },
   { label: 'Акции', to: '/promotions' },
-  { label: 'Оплата', to: '/payment' },
   { label: 'Новости', to: '/news' },
 ];
 
@@ -24,7 +24,6 @@ const moreItems = [
   { label: 'Проекты', to: '/projects', icon: FolderKanban },
   { label: 'Новости', to: '/news', icon: Newspaper },
   { label: 'Акции', to: '/promotions', icon: Percent },
-  { label: 'Оплата', to: '/payment', icon: WalletCards },
 ];
 
 const legalItems = [
