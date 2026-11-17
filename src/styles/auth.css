@@ -1,3 +1,69 @@
+.account-site {
+  min-height: 100dvh;
+  background: #f4f5f6;
+}
+
+.account-site__header {
+  position: relative;
+  z-index: 20;
+  min-height: 72px;
+  border-top: 2px solid #262a38;
+  border-bottom: 1px solid #e2e6eb;
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgb(32 36 52 / 8%);
+}
+
+.account-site__header-container {
+  display: flex;
+  min-height: 69px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  width: min(100% - 48px, 1280px);
+  margin: 0 auto;
+}
+
+.account-site__identity {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.account-site__identity > span {
+  padding-left: 18px;
+  border-left: 1px solid #dfe3e8;
+  color: #657082;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.account-site__public-link {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px;
+  border: 1px solid #dfe3e8;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #596273;
+  font-size: 12px;
+  font-weight: 800;
+  transition: border-color .2s ease, color .2s ease, background-color .2s ease;
+}
+
+.account-site__public-link:hover,
+.account-site__public-link:focus-visible {
+  border-color: #84b72d;
+  background: #f4f9ec;
+  color: #6e9e21;
+  outline: 0;
+}
+
+.account-site .auth-page {
+  height: calc(100dvh - 72px);
+}
+
 .auth-page {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -278,6 +344,22 @@
 }
 
 @media (max-width: 580px) {
+  .account-site__header-container {
+    width: min(100% - 32px, 1280px);
+  }
+
+  .account-site__identity > span {
+    display: none;
+  }
+
+  .account-site__public-link {
+    padding: 0 11px;
+  }
+
+  .account-site__public-link svg {
+    display: none;
+  }
+
   .auth-page__form-wrap {
     min-height: 0;
     padding: 12px 4px;

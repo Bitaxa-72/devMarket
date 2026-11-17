@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Link, useNavigate, useOutletContext } from 'react-router-dom';
 import { PageHero } from '../components/PageHero';
 import { PaymentWorkspace } from '../components/PaymentWorkspace';
+import { getAccountUrl } from '../lib/site-urls';
 
 const getPrice = (value) => Number(value.replace(/[^\d]/g, '')) || 0;
 const formatPrice = (value) => new Intl.NumberFormat('ru-RU').format(value);
@@ -88,6 +89,6 @@ export function CheckoutPage() {
 
 export function CheckoutSuccessPage() {
   return (
-    <main className="success-page"><div className="success-page__content"><span><Check size={42} strokeWidth={2} /></span><small>Заказ принят</small><h1>Спасибо! Начинаем знакомство</h1><p>Мы отправили подтверждение и свяжемся с вами, чтобы уточнить детали проекта.</p><div><Link className="ui-button ui-button--primary" to="/account">Перейти в личный кабинет</Link><Link className="ui-button ui-button--outline" to="/">На главную</Link></div></div></main>
+    <main className="success-page"><div className="success-page__content"><span><Check size={42} strokeWidth={2} /></span><small>Заказ принят</small><h1>Спасибо! Начинаем знакомство</h1><p>Мы отправили подтверждение и свяжемся с вами, чтобы уточнить детали проекта.</p><div><a className="ui-button ui-button--primary" href={getAccountUrl('/account')}>Перейти в личный кабинет</a><Link className="ui-button ui-button--outline" to="/">На главную</Link></div></div></main>
   );
 }

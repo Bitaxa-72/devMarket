@@ -4,6 +4,7 @@ import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { AccountShell } from '../components/AccountShell';
 import { PaymentWorkspace } from '../components/PaymentWorkspace';
 import { accountOrders, getAccountOrder, orderStatuses } from '../data/account-data';
+import { getPublicSiteUrl } from '../lib/site-urls';
 
 export function AccountPage() {
   const [searchParams] = useSearchParams();
@@ -28,7 +29,7 @@ function OrdersPanel() {
   const visibleOrders = activeStatuses.length ? accountOrders.filter((order) => activeStatuses.includes(order.status)) : accountOrders;
   const toggleStatus = (status) => setActiveStatuses((items) => items.includes(status) ? items.filter((item) => item !== status) : [...items, status]);
 
-  return <div className="account-panel"><div className="account-panel__heading"><div><span>Заказы</span><h2>Мои проекты</h2></div><Link className="ui-button ui-button--primary" to="/catalog">Новый заказ</Link></div><div className="order-filters">{orderStatuses.map((status) => <button className={activeStatuses.includes(status.id) ? 'order-filters__button order-filters__button--active' : 'order-filters__button'} type="button" aria-pressed={activeStatuses.includes(status.id)} key={status.id} onClick={() => toggleStatus(status.id)}>{status.label}</button>)}</div>{visibleOrders.map((order) => <article className="order-row" key={order.id}><span className="order-row__number">#{order.id}</span><div><h3>{order.title}</h3><p>Создан {order.createdAt}</p></div><span className={`order-row__status order-row__status--${order.status}`}>{orderStatuses.find((status) => status.id === order.status).label}</span><strong>{order.price}</strong><Link className="order-row__details" to={`/account/orders/${order.id}`}>Подробнее</Link></article>)}</div>;
+  return <div className="account-panel"><div className="account-panel__heading"><div><span>Заказы</span><h2>Мои проекты</h2></div><a className="ui-button ui-button--primary" href={getPublicSiteUrl('/catalog')}>Новый заказ</a></div><div className="order-filters">{orderStatuses.map((status) => <button className={activeStatuses.includes(status.id) ? 'order-filters__button order-filters__button--active' : 'order-filters__button'} type="button" aria-pressed={activeStatuses.includes(status.id)} key={status.id} onClick={() => toggleStatus(status.id)}>{status.label}</button>)}</div>{visibleOrders.map((order) => <article className="order-row" key={order.id}><span className="order-row__number">#{order.id}</span><div><h3>{order.title}</h3><p>Создан {order.createdAt}</p></div><span className={`order-row__status order-row__status--${order.status}`}>{orderStatuses.find((status) => status.id === order.status).label}</span><strong>{order.price}</strong><Link className="order-row__details" to={`/account/orders/${order.id}`}>Подробнее</Link></article>)}</div>;
 }
 
 export function AccountOrderPage() {

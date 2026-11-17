@@ -57,7 +57,7 @@ test('login panel fills the available viewport and centers both columns', async 
     const inspect = async () => {
       const response = await send('Runtime.evaluate', {
         expression: `(() => {
-          const header = document.querySelector('.header')?.getBoundingClientRect();
+          const header = document.querySelector('.header, .account-site__header')?.getBoundingClientRect();
           const page = document.querySelector('.auth-page')?.getBoundingClientRect();
           const visual = document.querySelector('.auth-page__visual');
           const visualRect = visual?.getBoundingClientRect();
@@ -88,7 +88,7 @@ test('login panel fills the available viewport and centers both columns', async 
     await send('Page.reload');
     await new Promise((resolve) => setTimeout(resolve, 600));
     const desktop = await inspect();
-    assert.ok(Math.abs(desktop.pageTop - desktop.headerBottom) < 1);
+    assert.ok(Math.abs(desktop.pageTop - desktop.headerBottom) < 1, JSON.stringify(desktop));
     assert.ok(Math.abs(desktop.pageBottom - desktop.viewportHeight) < 1, JSON.stringify(desktop));
     assert.ok(desktop.visualCenterGap < 3, JSON.stringify(desktop));
     assert.ok(desktop.formCenterGap < 2);
@@ -98,7 +98,8 @@ test('login panel fills the available viewport and centers both columns', async 
     await send('Page.reload');
     await new Promise((resolve) => setTimeout(resolve, 600));
     const mobile = await inspect();
-    assert.equal(mobile.pageHeight, mobile.viewportHeight);
+    assert.ok(Math.abs(mobile.pageTop - mobile.headerBottom) < 1, JSON.stringify(mobile));
+    assert.equal(mobile.pageHeight, mobile.viewportHeight - mobile.headerBottom);
     assert.equal(mobile.visualDisplay, 'none');
     assert.ok(mobile.formCenterGap < 2);
     assert.equal(mobile.documentWidth, mobile.viewportWidth);
