@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, ArrowRight, ArrowUpRight } from 'lucide-react';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import termburgImage from '../assets/hero/termburg-desktop.png';
 import hotlineImage from '../assets/portfolio/hotline-service.png';
@@ -164,7 +164,6 @@ export function HeroSlider({ onOpenContacts }) {
             <figcaption className="hero-slider__project">
               <span className="hero-slider__project-type">{activeSlide.projectType}</span>
               <strong className="hero-slider__project-title">{activeSlide.project}</strong>
-              <ArrowUpRight className="hero-slider__project-icon" size={20} strokeWidth={2} aria-hidden="true" />
             </figcaption>
           </figure>
           <button className="hero-slider__arrow hero-slider__arrow--previous" type="button" aria-label="Предыдущий слайд" onClick={() => changeSlide(activeIndex - 1)}>
