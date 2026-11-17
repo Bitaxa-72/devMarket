@@ -128,6 +128,13 @@ export function HeroSlider({ onOpenContacts }) {
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
+      <svg className="hero-slider__clip-definitions" aria-hidden="true" focusable="false">
+        <defs>
+          <clipPath id="hero-slider-frame-clip" clipPathUnits="objectBoundingBox">
+            <path d="M .18 0 H 1 V 1 H .18 C .16 1 .15 .98 .15 .95 C .12 .84 0 .64 0 .52 C 0 .48 .12 .16 .15 .05 C .15 .02 .16 0 .18 0 Z" />
+          </clipPath>
+        </defs>
+      </svg>
       <span className="hero-slider__status" aria-live="polite">Слайд {activeIndex + 1} из {slides.length}: {activeSlide.title}</span>
       <div className="hero-slider__viewport">
         <div
