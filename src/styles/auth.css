@@ -2,7 +2,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   width: 100%;
-  height: calc(100dvh - 175px);
+  height: calc(100dvh - 174px);
   min-height: 0;
   overflow-x: hidden;
 }
