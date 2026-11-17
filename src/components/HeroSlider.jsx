@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import termburgImage from '../assets/hero/termburg-desktop.png';
 import hotlineImage from '../assets/portfolio/hotline-service.png';
@@ -13,8 +13,6 @@ const slides = [
     id: 'ready-solutions',
     title: 'Запускайте новый продукт на готовой основе',
     description: 'Выберите проверенный сценарий и адаптируйте интерфейс, функции и интеграции под задачи вашего бизнеса.',
-    project: 'SeliBox',
-    projectType: 'Сервис подбора и заказа наборов',
     image: seliboxImage,
     imageAlt: 'Интерфейс сервиса SeliBox с каталогом готовых наборов',
     primaryLabel: 'Выбрать решение',
@@ -27,8 +25,6 @@ const slides = [
     id: 'custom-development',
     title: 'Создаём сервисы под реальные процессы компании',
     description: 'Проектируем путь клиента, собираем интерфейс и связываем продукт с нужными системами — от первой схемы до запуска.',
-    project: 'Hotline Service',
-    projectType: 'Сайт и цифровые сервисы компании',
     image: hotlineImage,
     imageAlt: 'Главная страница проекта Hotline Service',
     primaryLabel: 'Обсудить задачу',
@@ -41,8 +37,6 @@ const slides = [
     id: 'business-websites',
     title: 'Показываем продукт так, чтобы им хотелось воспользоваться',
     description: 'Соединяем понятную структуру, выразительную подачу и удобный сценарий обращения в цельный цифровой продукт.',
-    project: 'Термбург',
-    projectType: 'Сайт термального комплекса',
     image: termburgImage,
     imageAlt: 'Главная страница сайта термального комплекса Термбург',
     primaryLabel: 'Смотреть проекты',
@@ -133,45 +127,33 @@ export function HeroSlider({ onOpenContacts }) {
               <Link className="hero-slider__button hero-slider__button--secondary" to={activeSlide.secondaryTo}>{activeSlide.secondaryLabel}</Link>
             )}
           </div>
-          <div className="hero-slider__pagination" aria-label="Выбор слайда">
-            {slides.map((slide, index) => (
-              <button
-                className={`hero-slider__pagination-button${index === activeIndex ? ' hero-slider__pagination-button--active' : ''}`}
-                type="button"
-                aria-current={index === activeIndex ? 'true' : undefined}
-                aria-label={`Показать слайд ${index + 1}: ${slide.paginationLabel}`}
-                key={slide.id}
-                onClick={() => changeSlide(index)}
-              >
-                <span className="hero-slider__pagination-number">0{index + 1}</span>
-                <span className="hero-slider__pagination-label">{slide.paginationLabel}</span>
-                <span className="hero-slider__pagination-track" aria-hidden="true">
-                  <span className={`hero-slider__pagination-progress${index === activeIndex ? ' hero-slider__pagination-progress--active' : ''}`} />
-                </span>
-              </button>
-            ))}
+          <div className="hero-slider__controls">
+            <button className="hero-slider__arrow" type="button" aria-label="Предыдущий слайд" onClick={() => changeSlide(activeIndex - 1)}>
+              <ChevronLeft size={25} strokeWidth={2.2} aria-hidden="true" />
+            </button>
+            <div className="hero-slider__pagination" aria-label="Выбор слайда">
+              {slides.map((slide, index) => (
+                <button
+                  className={`hero-slider__pagination-button${index === activeIndex ? ' hero-slider__pagination-button--active' : ''}`}
+                  type="button"
+                  aria-current={index === activeIndex ? 'true' : undefined}
+                  aria-label={`Показать слайд ${index + 1}: ${slide.paginationLabel}`}
+                  key={slide.id}
+                  onClick={() => changeSlide(index)}
+                >
+                  <span className="hero-slider__pagination-dot" aria-hidden="true" />
+                </button>
+              ))}
+            </div>
+            <button className="hero-slider__arrow" type="button" aria-label="Следующий слайд" onClick={() => changeSlide(activeIndex + 1)}>
+              <ChevronRight size={25} strokeWidth={2.2} aria-hidden="true" />
+            </button>
           </div>
         </div>
         <div className="hero-slider__visual" key={`visual-${activeSlide.id}`}>
-          <span className="hero-slider__visual-plane" aria-hidden="true" />
           <figure className="hero-slider__frame">
-            <span className="hero-slider__browser-bar" aria-hidden="true">
-              <i className="hero-slider__browser-dot" />
-              <i className="hero-slider__browser-dot" />
-              <i className="hero-slider__browser-dot" />
-            </span>
             <img className="hero-slider__image" src={activeSlide.image} alt={activeSlide.imageAlt} />
-            <figcaption className="hero-slider__project">
-              <span className="hero-slider__project-type">{activeSlide.projectType}</span>
-              <strong className="hero-slider__project-title">{activeSlide.project}</strong>
-            </figcaption>
           </figure>
-          <button className="hero-slider__arrow hero-slider__arrow--previous" type="button" aria-label="Предыдущий слайд" onClick={() => changeSlide(activeIndex - 1)}>
-            <ArrowLeft size={22} strokeWidth={2} aria-hidden="true" />
-          </button>
-          <button className="hero-slider__arrow hero-slider__arrow--next" type="button" aria-label="Следующий слайд" onClick={() => changeSlide(activeIndex + 1)}>
-            <ArrowRight size={22} strokeWidth={2} aria-hidden="true" />
-          </button>
         </div>
       </div>
     </section>
