@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { wrapSlideIndex } from '../src/utils/slider.js';
+import * as slider from '../src/utils/slider.js';
+
+const { wrapSlideIndex } = slider;
 
 test('keeps an index inside the slide range', () => {
   assert.equal(wrapSlideIndex(1, 3), 1);
@@ -21,4 +23,10 @@ test('wraps indexes across multiple cycles', () => {
 
 test('rejects an empty slide collection', () => {
   assert.throws(() => wrapSlideIndex(0, 0), RangeError);
+});
+
+test('snaps cloned edge slides back into the real loop', () => {
+  assert.equal(slider.normalizeLoopTrackIndex?.(0, 3), 3);
+  assert.equal(slider.normalizeLoopTrackIndex?.(4, 3), 1);
+  assert.equal(slider.normalizeLoopTrackIndex?.(2, 3), 2);
 });

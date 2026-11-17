@@ -1,57 +1,54 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import termburgImage from '../assets/hero/termburg-desktop.png';
 import hotlineImage from '../assets/portfolio/hotline-service.png';
 import seliboxImage from '../assets/portfolio/selibox.png';
-import { wrapSlideIndex } from '../utils/slider';
+import { normalizeLoopTrackIndex, wrapSlideIndex } from '../utils/slider';
 
 const AUTOPLAY_DELAY = 7000;
 
 const slides = [
   {
     id: 'ready-solutions',
-    title: 'Запускайте новый продукт на готовой основе',
-    description: 'Выберите проверенный сценарий и адаптируйте интерфейс, функции и интеграции под задачи вашего бизнеса.',
+    title: 'Готовые решения',
+    description: 'Выберите проверенное решение и адаптируйте интерфейс, функции и интеграции под задачи вашего бизнеса.',
     image: seliboxImage,
     imageAlt: 'Интерфейс сервиса SeliBox с каталогом готовых наборов',
-    primaryLabel: 'Выбрать решение',
-    primaryTo: '/catalog',
-    secondaryLabel: 'Смотреть проекты',
-    secondaryTo: '/projects',
+    actionLabel: 'Выбрать решение',
+    actionTo: '/catalog',
     paginationLabel: 'Готовые решения',
   },
   {
     id: 'custom-development',
-    title: 'Создаём сервисы под реальные процессы компании',
+    title: 'Разработка под ключ',
     description: 'Проектируем путь клиента, собираем интерфейс и связываем продукт с нужными системами — от первой схемы до запуска.',
     image: hotlineImage,
     imageAlt: 'Главная страница проекта Hotline Service',
-    primaryLabel: 'Обсудить задачу',
-    primaryAction: 'contact',
-    secondaryLabel: 'Наши работы',
-    secondaryTo: '/projects',
-    paginationLabel: 'Под ключ',
+    actionLabel: 'Обсудить задачу',
+    action: 'contact',
+    paginationLabel: 'Разработка под ключ',
   },
   {
     id: 'business-websites',
-    title: 'Показываем продукт так, чтобы им хотелось воспользоваться',
+    title: 'Сайты для бизнеса',
     description: 'Соединяем понятную структуру, выразительную подачу и удобный сценарий обращения в цельный цифровой продукт.',
     image: termburgImage,
     imageAlt: 'Главная страница сайта термального комплекса Термбург',
-    primaryLabel: 'Смотреть проекты',
-    primaryTo: '/projects',
-    secondaryLabel: 'Обсудить запуск',
-    secondaryAction: 'contact',
-    paginationLabel: 'Сайты',
+    actionLabel: 'Смотреть проекты',
+    actionTo: '/projects',
+    paginationLabel: 'Сайты для бизнеса',
   },
 ];
 
 export function HeroSlider({ onOpenContacts }) {
-  const [activeIndex, setActiveIndex] = useState(0);
+  const loopedSlides = useMemo(() => [slides[slides.length - 1], ...slides, slides[0]], []);
+  const [trackIndex, setTrackIndex] = useState(1);
+  const [isTransitionEnabled, setIsTransitionEnabled] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
   const [resetCount, setResetCount] = useState(0);
   const [reduceMotion, setReduceMotion] = useState(false);
+  const activeIndex = wrapSlideIndex(trackIndex - 1, slides.length);
   const activeSlide = slides[activeIndex];
 
   useEffect(() => {
@@ -70,26 +67,47 @@ export function HeroSlider({ onOpenContacts }) {
     }
 
     const timer = window.setTimeout(() => {
-      setActiveIndex((currentIndex) => wrapSlideIndex(currentIndex + 1, slides.length));
+      setTrackIndex((currentIndex) => currentIndex + 1);
     }, AUTOPLAY_DELAY);
 
     return () => window.clearTimeout(timer);
   }, [activeIndex, isPaused, reduceMotion, resetCount]);
 
-  const changeSlide = (nextIndex) => {
-    setActiveIndex(wrapSlideIndex(nextIndex, slides.length));
+  const changeSlide = (nextTrackIndex) => {
+    if (nextTrackIndex < 0 || nextTrackIndex > slides.length + 1) {
+      return;
+    }
+
+    setIsTransitionEnabled(true);
+    setTrackIndex(nextTrackIndex);
     setResetCount((count) => count + 1);
+  };
+
+  const selectSlide = (index) => {
+    changeSlide(index + 1);
+  };
+
+  const handleTransitionEnd = () => {
+    if (trackIndex !== 0 && trackIndex !== slides.length + 1) {
+      return;
+    }
+
+    setIsTransitionEnabled(false);
+    setTrackIndex(normalizeLoopTrackIndex(trackIndex, slides.length));
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => setIsTransitionEnabled(true));
+    });
   };
 
   const handleKeyDown = (event) => {
     if (event.key === 'ArrowLeft') {
       event.preventDefault();
-      changeSlide(activeIndex - 1);
+      changeSlide(trackIndex - 1);
     }
 
     if (event.key === 'ArrowRight') {
       event.preventDefault();
-      changeSlide(activeIndex + 1);
+      changeSlide(trackIndex + 1);
     }
   };
 
@@ -111,50 +129,62 @@ export function HeroSlider({ onOpenContacts }) {
       onMouseLeave={() => setIsPaused(false)}
     >
       <span className="hero-slider__status" aria-live="polite">Слайд {activeIndex + 1} из {slides.length}: {activeSlide.title}</span>
-      <div className="hero-slider__container">
-        <div className="hero-slider__content">
-          <h1 className="hero-slider__title">{activeSlide.title}</h1>
-          <p className="hero-slider__description">{activeSlide.description}</p>
-          <div className="hero-slider__actions">
-            {activeSlide.primaryAction === 'contact' ? (
-              <button className="hero-slider__button hero-slider__button--primary" type="button" onClick={onOpenContacts}>{activeSlide.primaryLabel}</button>
-            ) : (
-              <Link className="hero-slider__button hero-slider__button--primary" to={activeSlide.primaryTo}>{activeSlide.primaryLabel}</Link>
-            )}
-            {activeSlide.secondaryAction === 'contact' ? (
-              <button className="hero-slider__button hero-slider__button--secondary" type="button" onClick={onOpenContacts}>{activeSlide.secondaryLabel}</button>
-            ) : (
-              <Link className="hero-slider__button hero-slider__button--secondary" to={activeSlide.secondaryTo}>{activeSlide.secondaryLabel}</Link>
-            )}
-          </div>
-          <div className="hero-slider__controls">
-            <button className="hero-slider__arrow" type="button" aria-label="Предыдущий слайд" onClick={() => changeSlide(activeIndex - 1)}>
-              <ChevronLeft size={25} strokeWidth={2.2} aria-hidden="true" />
-            </button>
-            <div className="hero-slider__pagination" aria-label="Выбор слайда">
-              {slides.map((slide, index) => (
-                <button
-                  className={`hero-slider__pagination-button${index === activeIndex ? ' hero-slider__pagination-button--active' : ''}`}
-                  type="button"
-                  aria-current={index === activeIndex ? 'true' : undefined}
-                  aria-label={`Показать слайд ${index + 1}: ${slide.paginationLabel}`}
-                  key={slide.id}
-                  onClick={() => changeSlide(index)}
-                >
-                  <span className="hero-slider__pagination-dot" aria-hidden="true" />
-                </button>
-              ))}
-            </div>
-            <button className="hero-slider__arrow" type="button" aria-label="Следующий слайд" onClick={() => changeSlide(activeIndex + 1)}>
-              <ChevronRight size={25} strokeWidth={2.2} aria-hidden="true" />
-            </button>
-          </div>
+      <div className="hero-slider__viewport">
+        <div
+          className={`hero-slider__track${isTransitionEnabled && !reduceMotion ? ' hero-slider__track--animated' : ''}`}
+          style={{ transform: `translate3d(-${trackIndex * 100}%, 0, 0)` }}
+          onTransitionEnd={handleTransitionEnd}
+        >
+          {loopedSlides.map((slide, index) => {
+            const slideIndex = wrapSlideIndex(index - 1, slides.length);
+            const isActive = slideIndex === activeIndex && index === trackIndex;
+
+            return (
+              <article className="hero-slider__slide" aria-hidden={!isActive} key={`${slide.id}-${index}`}>
+                <div className="hero-slider__container">
+                  <div className="hero-slider__content">
+                    <h1 className="hero-slider__title">{slide.title}</h1>
+                    <p className="hero-slider__description">{slide.description}</p>
+                    <div className="hero-slider__actions">
+                      {slide.action === 'contact' ? (
+                        <button className="hero-slider__button" type="button" tabIndex={isActive ? 0 : -1} onClick={onOpenContacts}>{slide.actionLabel}</button>
+                      ) : (
+                        <Link className="hero-slider__button" to={slide.actionTo} tabIndex={isActive ? 0 : -1}>{slide.actionLabel}</Link>
+                      )}
+                    </div>
+                  </div>
+                  <div className="hero-slider__visual">
+                    <figure className="hero-slider__frame">
+                      <img className="hero-slider__image" src={slide.image} alt={slide.imageAlt} />
+                    </figure>
+                  </div>
+                </div>
+              </article>
+            );
+          })}
         </div>
-        <div className="hero-slider__visual">
-          <figure className="hero-slider__frame">
-            <img className="hero-slider__image" src={activeSlide.image} alt={activeSlide.imageAlt} />
-          </figure>
+      </div>
+      <div className="hero-slider__navigation">
+        <button className="hero-slider__arrow" type="button" aria-label="Предыдущий слайд" onClick={() => changeSlide(trackIndex - 1)}>
+          <ChevronLeft size={24} strokeWidth={2.2} aria-hidden="true" />
+        </button>
+        <div className="hero-slider__pagination" aria-label="Выбор слайда">
+          {slides.map((slide, index) => (
+            <button
+              className={`hero-slider__pagination-button${index === activeIndex ? ' hero-slider__pagination-button--active' : ''}`}
+              type="button"
+              aria-current={index === activeIndex ? 'true' : undefined}
+              aria-label={`Показать слайд ${index + 1}: ${slide.paginationLabel}`}
+              key={slide.id}
+              onClick={() => selectSlide(index)}
+            >
+              <span className="hero-slider__pagination-dot" aria-hidden="true" />
+            </button>
+          ))}
         </div>
+        <button className="hero-slider__arrow" type="button" aria-label="Следующий слайд" onClick={() => changeSlide(trackIndex + 1)}>
+          <ChevronRight size={24} strokeWidth={2.2} aria-hidden="true" />
+        </button>
       </div>
     </section>
   );
