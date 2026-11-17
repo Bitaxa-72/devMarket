@@ -1,6 +1,7 @@
 import { CreditCard, LockKeyhole, LogOut, MessageCircle, PackageCheck, UserRound } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { accountBalance } from '../data/account-data';
+import { authRequest } from '../lib/auth-api';
 import { PageHero } from './PageHero';
 
 const accountNavigation = [
@@ -12,6 +13,12 @@ const accountNavigation = [
 ];
 
 export function AccountShell({ activeTab, breadcrumbs = [], children, title = 'Здравствуйте, Алексей' }) {
+  const navigate = useNavigate();
+  const logout = async () => {
+    await authRequest('/logout', { method: 'POST' }).catch(() => undefined);
+    navigate('/login', { replace: true });
+  };
+
   return (
     <main>
       <PageHero title={title} breadcrumbs={[{ label: 'Личный кабинет', to: breadcrumbs.length ? '/account' : undefined }, ...breadcrumbs]} compact>
@@ -24,7 +31,7 @@ export function AccountShell({ activeTab, breadcrumbs = [], children, title = '�
               const Icon = item.icon;
               return <Link className={activeTab === item.id ? 'account-page__tab account-page__tab--active' : 'account-page__tab'} to={item.to} key={item.id}><Icon size={19} />{item.label}</Link>;
             })}
-            <Link className="account-page__logout" to="/login"><LogOut size={18} />Выйти</Link>
+            <button className="account-page__logout" onClick={logout} type="button"><LogOut size={18} />Выйти</button>
           </aside>
           <div className="account-page__content">{children}</div>
         </div>

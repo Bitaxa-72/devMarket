@@ -86,7 +86,7 @@ test('login panel fills the available viewport and centers both columns', async 
 
     await send('Emulation.setDeviceMetricsOverride', { width: 1440, height: 900, deviceScaleFactor: 1, mobile: false });
     await send('Page.reload');
-    await new Promise((resolve) => setTimeout(resolve, 250));
+    await new Promise((resolve) => setTimeout(resolve, 600));
     const desktop = await inspect();
     assert.ok(Math.abs(desktop.pageTop - desktop.headerBottom) < 1);
     assert.ok(Math.abs(desktop.pageBottom - desktop.viewportHeight) < 1, JSON.stringify(desktop));
@@ -96,7 +96,7 @@ test('login panel fills the available viewport and centers both columns', async 
 
     await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
     await send('Page.reload');
-    await new Promise((resolve) => setTimeout(resolve, 250));
+    await new Promise((resolve) => setTimeout(resolve, 600));
     const mobile = await inspect();
     assert.equal(mobile.pageHeight, mobile.viewportHeight);
     assert.equal(mobile.visualDisplay, 'none');

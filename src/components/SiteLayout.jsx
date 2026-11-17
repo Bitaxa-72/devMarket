@@ -21,6 +21,9 @@ const pageMeta = [
   { match: /^\/checkout/, title: 'Оформление заказа — Devmarket', description: 'Контактные данные и состав заказа на разработку.' },
   { match: /^\/account/, title: 'Личный кабинет — Devmarket', description: 'Заказы, профиль, безопасность и чат с менеджером.' },
   { match: /^\/login/, title: 'Вход в личный кабинет — Devmarket', description: 'Вход и восстановление доступа к личному кабинету Devmarket.' },
+  { match: /^\/register/, title: 'Регистрация — Devmarket', description: 'Регистрация и подтверждение email для доступа к личному кабинету Devmarket.' },
+  { match: /^\/(forgot-password|reset-password)/, title: 'Восстановление доступа — Devmarket', description: 'Безопасное восстановление доступа к личному кабинету Devmarket.' },
+  { match: /^\/verify-email/, title: 'Подтверждение email — Devmarket', description: 'Подтверждение email для входа в личный кабинет Devmarket.' },
   { match: /^\/search/, title: 'Поиск — Devmarket', description: 'Поиск по решениям, проектам и статьям Devmarket.' },
   { match: /^\/privacy/, title: 'Политика конфиденциальности — Devmarket', description: 'Условия обработки персональных данных.' },
   { match: /^\/offer/, title: 'Публичная оферта — Devmarket', description: 'Условия оказания и оплаты услуг Devmarket.' },
@@ -28,7 +31,7 @@ const pageMeta = [
 
 export function SiteLayout() {
   const location = useLocation();
-  const isLoginPage = location.pathname === '/login';
+  const isAuthPage = /^\/(login|register|forgot-password|reset-password|verify-email)$/.test(location.pathname);
   const previousPathnameRef = useRef(null);
   const [isContactsOpen, setIsContactsOpen] = useState(false);
   const [contactSubject, setContactSubject] = useState('');
@@ -94,8 +97,8 @@ export function SiteLayout() {
     <>
       <Header onOpenContacts={openContacts} cartCount={cartCount} />
       <Outlet context={{ addToCart, cartItems, clearCart, onOpenContacts: openContacts, updateCartItem }} />
-      {location.pathname !== '/' && !isLoginPage && <TrustBand />}
-      {!isLoginPage && <Footer onOpenContacts={openContacts} />}
+      {location.pathname !== '/' && !isAuthPage && <TrustBand />}
+      {!isAuthPage && <Footer onOpenContacts={openContacts} />}
       <ContactModal isOpen={isContactsOpen} onClose={() => setIsContactsOpen(false)} subject={contactSubject} />
       <CookieConsent />
     </>

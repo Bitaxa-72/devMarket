@@ -5,17 +5,6 @@ import { AccountShell } from '../components/AccountShell';
 import { PaymentWorkspace } from '../components/PaymentWorkspace';
 import { accountOrders, getAccountOrder, orderStatuses } from '../data/account-data';
 
-export function LoginPage() {
-  const [mode, setMode] = useState('login');
-
-  return (
-    <main className="auth-page">
-      <div className="auth-page__visual"><span className="auth-page__badge">D</span><h1>Управляйте проектами в одном месте</h1><p>Заказы, документы, статусы работ и общение с командой.</p><div><span><Check size={17} />История заказов</span><span><Check size={17} />Документы и оплаты</span><span><Check size={17} />Прямой чат</span></div></div>
-      <div className="auth-page__form-wrap"><div className="auth-page__form"><span>Личный кабинет</span><h2>{mode === 'login' ? 'Вход' : 'Восстановление доступа'}</h2><p>{mode === 'login' ? 'Введите данные, указанные при оформлении заказа.' : 'Отправим ссылку для смены пароля на вашу почту.'}</p><form><label><span>Email</span><input type="email" required autoComplete="email" /></label>{mode === 'login' && <label><span>Пароль</span><input type="password" required autoComplete="current-password" /></label>}<Link className="ui-button ui-button--primary" to="/account">{mode === 'login' ? 'Войти' : 'Отправить ссылку'}</Link></form><button className="auth-page__switch" type="button" onClick={() => setMode(mode === 'login' ? 'reset' : 'login')}>{mode === 'login' ? 'Забыли пароль?' : 'Вернуться ко входу'}</button></div></div>
-    </main>
-  );
-}
-
 export function AccountPage() {
   const [searchParams] = useSearchParams();
   const requestedTab = searchParams.get('tab');
