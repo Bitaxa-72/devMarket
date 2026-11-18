@@ -134,7 +134,7 @@
 
 .hero-slider__frame {
   position: absolute;
-  inset: 0 calc((100vw - min(100vw - 32px, 1344px)) / -2) 0 0;
+  inset: -1px calc((100vw - min(100vw - 32px, 1344px)) / -2) -1px 0;
   overflow: hidden;
   margin: 0;
   background: #171b26;

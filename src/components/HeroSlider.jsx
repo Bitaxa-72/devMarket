@@ -112,7 +112,7 @@ export function HeroSlider({ onOpenContacts }) {
       <svg className="hero-slider__clip-definitions" aria-hidden="true" focusable="false">
         <defs>
           <clipPath id="hero-slider-frame-clip" clipPathUnits="objectBoundingBox">
-            <path d="M .18 0 H 1 V 1 H .18 C .165 1 .155 .985 .15 .96 L .02 .59 C -.007 .53 -.007 .47 .02 .41 L .15 .04 C .155 .015 .165 0 .18 0 Z" />
+            <path d="M .2 0 H 1 V 1 H .2 C .18 1 .165 .985 .155 .96 L .02 .59 C .01 .5626 0 .53 0 .5 C 0 .47 .01 .4374 .02 .41 L .155 .04 C .165 .015 .18 0 .2 0 Z" />
           </clipPath>
         </defs>
       </svg>

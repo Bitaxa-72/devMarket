@@ -8,6 +8,9 @@ const styles = readFileSync(new URL('../src/styles/hero-slider.css', import.meta
 test('uses a smooth scalable clip path for the desktop hero image', () => {
   assert.match(component, /clipPathUnits="objectBoundingBox"/);
   assert.match(component, /<path d="[^"]*C[^"]*"/);
+  assert.match(component, /C \.01 \.5626 0 \.53 0 \.5 C 0 \.47 \.01 \.4374 \.02 \.41/);
+  assert.doesNotMatch(component, /C [^"]*-\./);
   assert.match(styles, /\.hero-slider__frame\s*\{[^}]*clip-path:\s*url\(#hero-slider-frame-clip\)/s);
+  assert.match(styles, /\.hero-slider__frame\s*\{[^}]*inset:\s*-1px[^;]*-1px 0;/s);
   assert.doesNotMatch(styles, /\.hero-slider__frame\s*\{[^}]*clip-path:\s*polygon\(/s);
 });
