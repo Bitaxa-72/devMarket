@@ -3,7 +3,6 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 const appSource = readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8');
-const authSource = readFileSync(new URL('../src/pages/AuthPages.jsx', import.meta.url), 'utf8');
 const authModalSource = readFileSync(new URL('../src/components/AuthModal.jsx', import.meta.url), 'utf8');
 const accountShellSource = readFileSync(new URL('../src/components/AccountShell.jsx', import.meta.url), 'utf8');
 
@@ -18,7 +17,7 @@ test('forms call the backend and expose password-manager hints', () => {
   assert.match(authModalSource, /authRequest\('\/login'/);
   assert.match(authModalSource, /authRequest\('\/register'/);
   assert.match(authModalSource, /authRequest\('\/forgot-password'/);
-  assert.match(authSource, /authRequest\('\/reset-password'/);
+  assert.match(authModalSource, /authRequest\('\/reset-password'/);
   assert.match(authModalSource, /autoComplete="current-password"/);
   assert.match(authModalSource, /autoComplete="new-password"/);
   assert.match(authModalSource, /Создать аккаунт/);

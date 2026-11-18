@@ -8,7 +8,6 @@ const accountLayoutUrl = new URL('../src/components/AccountLayout.jsx', import.m
 const accountLayoutSource = existsSync(accountLayoutUrl) ? readFileSync(accountLayoutUrl, 'utf8') : '';
 const accountPagesSource = readFileSync(new URL('../src/pages/AccountPages.jsx', import.meta.url), 'utf8');
 const commercePagesSource = readFileSync(new URL('../src/pages/CommercePages.jsx', import.meta.url), 'utf8');
-const authPagesSource = readFileSync(new URL('../src/pages/AuthPages.jsx', import.meta.url), 'utf8');
 const siteLayoutSource = readFileSync(new URL('../src/components/SiteLayout.jsx', import.meta.url), 'utf8');
 const sessionControlSource = readFileSync(new URL('../src/components/SessionAccountControl.jsx', import.meta.url), 'utf8');
 const authModalSource = readFileSync(new URL('../src/components/AuthModal.jsx', import.meta.url), 'utf8');
@@ -24,6 +23,7 @@ test('legacy authentication URLs open modal modes on the main website', () => {
   assert.match(appSource, /path="login" element=\{<Navigate replace to="\/\?auth=login" \/>\}/);
   assert.match(appSource, /path="register" element=\{<Navigate replace to="\/\?auth=register" \/>\}/);
   assert.match(appSource, /path="forgot-password" element=\{<Navigate replace to="\/\?auth=forgot" \/>\}/);
+  assert.match(appSource, /path="reset-password" element=\{<LegacyResetRedirect \/>\}/);
 });
 
 test('public header reflects the shared authenticated session', () => {
@@ -41,9 +41,9 @@ test('authentication actions share one modal', () => {
   assert.match(siteLayoutSource, /<AuthModal/);
 });
 
-test('password reset without a token does not render password fields', () => {
-  assert.match(authPagesSource, /if \(!token\) return <InvalidResetLink/);
-  assert.match(authPagesSource, /Запросить новую ссылку/);
+test('password reset without a token stays inside the modal and offers a new request', () => {
+  assert.match(authModalSource, /if \(!token\)/);
+  assert.match(authModalSource, /Запросить новую ссылку/);
 });
 
 test('authentication redirects preserve email token query parameters', () => {

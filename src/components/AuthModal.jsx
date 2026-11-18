@@ -9,6 +9,7 @@ const modeContent = {
   login: { title: 'Вход', description: 'Введите email и пароль, указанные при регистрации.' },
   register: { title: 'Регистрация', description: 'Создайте аккаунт и подтвердите email по ссылке из письма.' },
   forgot: { title: 'Восстановление доступа', description: 'Отправим одноразовую ссылку для смены пароля на вашу почту.' },
+  reset: { title: 'Новый пароль', description: 'Придумайте свой пароль или сгенерируйте надёжный.' },
 };
 
 function LoginForm({ onAuthenticated, onModeChange }) {
@@ -125,7 +126,53 @@ function ForgotPasswordForm() {
   );
 }
 
-export function AuthModal({ initialMode = 'login', isOpen, onAuthenticated, onClose }) {
+function ResetPasswordForm({ onModeChange, token }) {
+  const [form, setForm] = useState({ password: '', confirmation: '' });
+  const [result, setResult] = useState({ error: '', message: '' });
+  const [pending, setPending] = useState(false);
+  const update = (event) => setForm((current) => ({ ...current, [event.target.name]: event.target.value }));
+  const generate = () => {
+    const password = generatePassword();
+    setForm({ password, confirmation: password });
+  };
+
+  const submit = async (event) => {
+    event.preventDefault();
+    if (!token) return setResult({ error: 'В ссылке отсутствует код восстановления', message: '' });
+    if (form.password !== form.confirmation) return setResult({ error: 'Пароли не совпадают', message: '' });
+    setPending(true);
+    setResult({ error: '', message: '' });
+    try {
+      const response = await authRequest('/reset-password', { method: 'POST', body: JSON.stringify({ token, password: form.password }) });
+      setResult({ error: '', message: response.message });
+    } catch (requestError) {
+      setResult({ error: requestError.message, message: '' });
+    } finally {
+      setPending(false);
+    }
+  };
+
+  if (!token) {
+    return (
+      <div className="auth-form auth-form--status">
+        <FormMessage error="Ссылка недействительна. Запросите новое письмо восстановления." />
+        <button className="ui-button ui-button--primary auth-form__submit" onClick={() => onModeChange('forgot')} type="button">Запросить новую ссылку</button>
+      </div>
+    );
+  }
+
+  return (
+    <form className="auth-form" onSubmit={submit}>
+      <PasswordInput autoComplete="new-password" label="Новый пароль" name="password" onChange={update} value={form.password} />
+      <PasswordGuide onGenerate={generate} password={form.password} />
+      <PasswordInput autoComplete="new-password" label="Повторите новый пароль" name="confirmation" onChange={update} value={form.confirmation} />
+      <FormMessage error={result.error} message={result.message} />
+      <button className="ui-button ui-button--primary auth-form__submit" disabled={pending} type="submit">{pending ? 'Сохраняем…' : 'Сохранить пароль'}</button>
+    </form>
+  );
+}
+
+export function AuthModal({ initialMode = 'login', isOpen, onAuthenticated, onClose, resetToken = '' }) {
   const [mode, setMode] = useState(initialMode);
   const dialogRef = useRef(null);
   const content = modeContent[mode];
@@ -150,20 +197,23 @@ export function AuthModal({ initialMode = 'login', isOpen, onAuthenticated, onCl
   return (
     <div className="auth-modal" role="presentation" onMouseDown={onClose}>
       <section className="auth-modal__dialog" ref={dialogRef} aria-labelledby="auth-modal-title" aria-modal="true" role="dialog" onMouseDown={(event) => event.stopPropagation()}>
-        <button className="auth-modal__close" type="button" aria-label="Закрыть" onClick={onClose}><X size={20} /></button>
-        {mode === 'forgot' ? (
-          <button className="auth-modal__back" data-auth-mode="login" onClick={() => setMode('login')} type="button"><ArrowLeft size={16} />Вернуться ко входу</button>
-        ) : (
-          <div className="auth-modal__tabs" aria-label="Способ авторизации">
-            <button className={mode === 'login' ? 'auth-modal__tab auth-modal__tab--active' : 'auth-modal__tab'} data-auth-mode="login" onClick={() => setMode('login')} type="button">Вход</button>
-            <button className={mode === 'register' ? 'auth-modal__tab auth-modal__tab--active' : 'auth-modal__tab'} data-auth-mode="register" onClick={() => setMode('register')} type="button">Регистрация</button>
-          </div>
-        )}
+        <div className="auth-modal__controls">
+          {mode === 'forgot' || mode === 'reset' ? (
+            <button className="auth-modal__back" data-auth-mode="login" onClick={() => setMode('login')} type="button"><ArrowLeft size={16} />Вернуться ко входу</button>
+          ) : (
+            <div className="auth-modal__tabs" aria-label="Способ авторизации">
+              <button className={mode === 'login' ? 'auth-modal__tab auth-modal__tab--active' : 'auth-modal__tab'} data-auth-mode="login" onClick={() => setMode('login')} type="button">Вход</button>
+              <button className={mode === 'register' ? 'auth-modal__tab auth-modal__tab--active' : 'auth-modal__tab'} data-auth-mode="register" onClick={() => setMode('register')} type="button">Регистрация</button>
+            </div>
+          )}
+          <button className="auth-modal__close" type="button" aria-label="Закрыть" onClick={onClose}><X size={20} /></button>
+        </div>
         <h2 className="auth-modal__title" id="auth-modal-title">{content.title}</h2>
         <p className="auth-modal__description">{content.description}</p>
         {mode === 'login' && <LoginForm onAuthenticated={onAuthenticated} onModeChange={setMode} />}
         {mode === 'register' && <RegisterForm />}
         {mode === 'forgot' && <ForgotPasswordForm />}
+        {mode === 'reset' && <ResetPasswordForm onModeChange={setMode} token={resetToken} />}
       </section>
     </div>
   );

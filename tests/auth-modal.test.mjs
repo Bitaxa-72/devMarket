@@ -95,6 +95,28 @@ test('anonymous account control opens all authentication modes in one modal', as
     await page.evaluate(`document.querySelector('[data-auth-mode="register"]').click()`);
     assert.equal(await page.evaluate(`document.querySelector('.auth-modal__title').textContent.trim()`), 'Регистрация');
     assert.equal(await page.evaluate(`Boolean(document.querySelector('input[name="confirmation"]'))`), true);
+    await page.send('Emulation.setDeviceMetricsOverride', { width: 1440, height: 900, deviceScaleFactor: 1, mobile: false });
+    const desktopDialog = await page.evaluate(`(() => {
+      const dialog = document.querySelector('.auth-modal__dialog');
+      const controls = document.querySelector('.auth-modal__controls')?.getBoundingClientRect();
+      const tabs = document.querySelector('.auth-modal__tabs').getBoundingClientRect();
+      const close = document.querySelector('.auth-modal__close').getBoundingClientRect();
+      return {
+        clientHeight: dialog.clientHeight,
+        scrollHeight: dialog.scrollHeight,
+        controlsTop: controls?.top,
+        tabsTop: tabs.top,
+        tabsHeight: tabs.height,
+        closeTop: close.top,
+        closeHeight: close.height,
+        controlsRight: controls?.right,
+        closeRight: close.right,
+      };
+    })()`);
+    assert.ok(desktopDialog.scrollHeight <= desktopDialog.clientHeight + 1, JSON.stringify(desktopDialog));
+    assert.ok(Math.abs(desktopDialog.tabsTop - desktopDialog.closeTop) <= 1, JSON.stringify(desktopDialog));
+    assert.ok(Math.abs(desktopDialog.tabsHeight - desktopDialog.closeHeight) <= 1, JSON.stringify(desktopDialog));
+    assert.ok(Math.abs(desktopDialog.controlsRight - desktopDialog.closeRight) <= 1, JSON.stringify(desktopDialog));
     await page.send('Emulation.setDeviceMetricsOverride', { width: 390, height: 667, deviceScaleFactor: 1, mobile: true });
     const mobileDialog = await page.evaluate(`(() => { const dialog = document.querySelector('.auth-modal__dialog'); const rect = dialog.getBoundingClientRect(); return { bottom: rect.bottom, left: rect.left, right: rect.right, overflowY: getComputedStyle(dialog).overflowY, pageWidth: document.documentElement.scrollWidth, viewportWidth: innerWidth, tabRight: document.querySelector('.auth-modal__tabs').getBoundingClientRect().right, closeRight: document.querySelector('.auth-modal__close').getBoundingClientRect().right, inputRight: document.querySelector('.auth-modal input:not([name="website"])').getBoundingClientRect().right }; })()`);
     assert.ok(mobileDialog.left < 1 && mobileDialog.right <= 390 && mobileDialog.bottom <= 667);
@@ -111,6 +133,11 @@ test('anonymous account control opens all authentication modes in one modal', as
     await page.send('Page.navigate', { url: `${baseUrl}/register` });
     await page.waitFor(`document.querySelector('.auth-modal__title')?.textContent.trim() === 'Регистрация'`);
     assert.equal(await page.evaluate(`location.pathname + location.search`), '/?auth=register');
+    await page.send('Page.navigate', { url: `${baseUrl}/reset-password?token=reset-token` });
+    await page.waitFor(`document.querySelector('.auth-modal__title')?.textContent.trim() === 'Новый пароль'`);
+    assert.equal(await page.evaluate(`location.pathname + location.search`), '/?token=reset-token&auth=reset');
+    assert.equal(await page.evaluate(`Boolean(document.querySelector('.hero-slider'))`), true);
+    assert.equal(await page.evaluate(`document.querySelectorAll('.auth-modal input[type="password"]').length`), 2);
   } finally {
     await page.close();
   }

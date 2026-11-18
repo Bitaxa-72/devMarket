@@ -34,7 +34,7 @@ const pageMeta = [
 export function SiteLayout() {
   const location = useLocation();
   const navigate = useNavigate();
-  const isAuthPage = /^\/(reset-password|verify-email)$/.test(location.pathname);
+  const isAuthPage = /^\/verify-email$/.test(location.pathname);
   const previousPathnameRef = useRef(null);
   const [isContactsOpen, setIsContactsOpen] = useState(false);
   const [contactSubject, setContactSubject] = useState('');
@@ -57,7 +57,7 @@ export function SiteLayout() {
 
   useEffect(() => {
     const requestedMode = new URLSearchParams(location.search).get('auth');
-    if (['login', 'register', 'forgot'].includes(requestedMode)) setAuthModalMode(requestedMode);
+    if (['login', 'register', 'forgot', 'reset'].includes(requestedMode)) setAuthModalMode(requestedMode);
   }, [location.search]);
 
   useEffect(() => {
@@ -118,6 +118,7 @@ export function SiteLayout() {
     const params = new URLSearchParams(location.search);
     if (!params.has('auth')) return;
     params.delete('auth');
+    params.delete('token');
     navigate({ pathname: location.pathname, search: params.toString() ? `?${params}` : '' }, { replace: true });
   }, [location.pathname, location.search, navigate]);
   const completeLogin = useCallback((user) => {
@@ -132,7 +133,7 @@ export function SiteLayout() {
       {location.pathname !== '/' && !isAuthPage && <TrustBand />}
       {!isAuthPage && <Footer onOpenContacts={openContacts} />}
       <ContactModal isOpen={isContactsOpen} onClose={() => setIsContactsOpen(false)} subject={contactSubject} />
-      <AuthModal initialMode={authModalMode || 'login'} isOpen={Boolean(authModalMode)} onAuthenticated={completeLogin} onClose={closeAuthModal} />
+      <AuthModal initialMode={authModalMode || 'login'} isOpen={Boolean(authModalMode)} onAuthenticated={completeLogin} onClose={closeAuthModal} resetToken={new URLSearchParams(location.search).get('token') || ''} />
       <CookieConsent />
     </>
   );

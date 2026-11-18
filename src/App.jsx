@@ -1,9 +1,9 @@
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { AccountLayout } from './components/AccountLayout';
 import { SiteLayout } from './components/SiteLayout';
 import { RequireAuth } from './components/RequireAuth';
 import { AccountOrderPage, AccountPage, AccountPaymentPage } from './pages/AccountPages';
-import { ResetPasswordPage, VerifyEmailPage } from './pages/AuthPages';
+import { VerifyEmailPage } from './pages/AuthPages';
 import { CatalogPage, ProductPage, ServicesPage } from './pages/CatalogPages';
 import { CartPage, CheckoutPage, CheckoutSuccessPage, PaymentPage } from './pages/CommercePages';
 import { ArticlePage, NewsPage, ProjectPage, ProjectsPage, PromotionsPage } from './pages/ContentPages';
@@ -19,6 +19,13 @@ function ExternalAccountRedirect({ path }) {
 function ExternalPublicRedirect({ path }) {
   window.location.replace(getPublicSiteUrl(`${path}${window.location.search}`));
   return <main className="state-page">Открываем страницу входа…</main>;
+}
+
+function LegacyResetRedirect() {
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  params.set('auth', 'reset');
+  return <Navigate replace to={`/?${params}`} />;
 }
 
 function AccountRoutes() {
@@ -63,7 +70,7 @@ function PublicRoutes() {
         <Route path="login" element={<Navigate replace to="/?auth=login" />} />
         <Route path="register" element={<Navigate replace to="/?auth=register" />} />
         <Route path="forgot-password" element={<Navigate replace to="/?auth=forgot" />} />
-        <Route path="reset-password" element={<ResetPasswordPage />} />
+        <Route path="reset-password" element={<LegacyResetRedirect />} />
         <Route path="verify-email" element={<VerifyEmailPage />} />
         <Route path="search" element={<SearchPage />} />
         <Route path="privacy" element={<PrivacyPage />} />
