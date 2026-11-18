@@ -25,6 +25,7 @@
 .auth-modal__controls {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 54px;
+  min-height: 54px;
   align-items: stretch;
   gap: 10px;
 }
@@ -145,6 +146,7 @@
 
   .auth-modal__controls {
     grid-template-columns: minmax(0, 1fr) 46px;
+    min-height: 46px;
   }
 
   .auth-modal__tabs {

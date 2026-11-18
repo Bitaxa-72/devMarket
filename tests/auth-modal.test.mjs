@@ -69,18 +69,26 @@ async function openBrowser(url) {
     }
     assert.fail(`Timed out: ${expression}`);
   };
+  const click = async (selector) => {
+    const point = await evaluate(`(() => { const rect = document.querySelector(${JSON.stringify(selector)}).getBoundingClientRect(); return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 }; })()`);
+    await send('Input.dispatchMouseEvent', { type: 'mousePressed', x: point.x, y: point.y, button: 'left', clickCount: 1 });
+    await send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: point.x, y: point.y, button: 'left', clickCount: 1 });
+  };
   const close = async () => {
     socket.close();
     child.kill();
     await new Promise((resolve) => setTimeout(resolve, 250));
     rmSync(profile, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
   };
+  const listPages = async () => fetch(`http://127.0.0.1:${port}/json/list`)
+    .then((response) => response.json())
+    .then((targets) => targets.filter((item) => item.type === 'page'));
   const on = (method, listener) => {
     const listeners = eventListeners.get(method) || [];
     listeners.push(listener);
     eventListeners.set(method, listeners);
   };
-  return { close, evaluate, on, send, waitFor };
+  return { click, close, evaluate, listPages, on, send, waitFor };
 }
 
 test('anonymous account control opens all authentication modes in one modal', async () => {
@@ -88,8 +96,12 @@ test('anonymous account control opens all authentication modes in one modal', as
   try {
     await page.waitFor(`document.querySelector('.header__login')?.textContent.includes('Войти') && !document.querySelector('.header__login').disabled`);
     assert.equal(await page.evaluate(`document.querySelector('.header__login').tagName`), 'BUTTON');
+    const headerBeforeModal = await page.evaluate(`(() => { const rect = document.querySelector('.header__container').getBoundingClientRect(); return { left: rect.left, right: rect.right }; })()`);
     await page.evaluate(`document.querySelector('.header__login').click()`);
     await page.waitFor(`Boolean(document.querySelector('.auth-modal [aria-modal="true"]'))`);
+    const headerWithModal = await page.evaluate(`(() => { const rect = document.querySelector('.header__container').getBoundingClientRect(); return { left: rect.left, right: rect.right }; })()`);
+    assert.ok(Math.abs(headerBeforeModal.left - headerWithModal.left) <= 1, JSON.stringify({ headerBeforeModal, headerWithModal }));
+    assert.ok(Math.abs(headerBeforeModal.right - headerWithModal.right) <= 1, JSON.stringify({ headerBeforeModal, headerWithModal }));
     assert.equal(await page.evaluate(`location.pathname`), '/');
     assert.equal(await page.evaluate(`document.querySelector('.auth-modal__title').textContent.trim()`), 'Вход');
     await page.evaluate(`document.querySelector('[data-auth-mode="register"]').click()`);
@@ -128,6 +140,14 @@ test('anonymous account control opens all authentication modes in one modal', as
     await page.evaluate(`document.querySelector('[data-auth-mode="forgot"]').click()`);
     assert.equal(await page.evaluate(`document.querySelector('.auth-modal__title').textContent.trim()`), 'Восстановление доступа');
     assert.equal(await page.evaluate(`document.querySelectorAll('.auth-modal input:not([name="website"])').length`), 1);
+    const recoveryControls = await page.evaluate(`(() => {
+      const back = document.querySelector('.auth-modal__back').getBoundingClientRect();
+      const close = document.querySelector('.auth-modal__close').getBoundingClientRect();
+      return { backHeight: back.height, closeHeight: close.height, topDifference: Math.abs(back.top - close.top) };
+    })()`);
+    assert.ok(recoveryControls.backHeight >= 44, JSON.stringify(recoveryControls));
+    assert.ok(Math.abs(recoveryControls.backHeight - recoveryControls.closeHeight) <= 1, JSON.stringify(recoveryControls));
+    assert.ok(recoveryControls.topDifference <= 1, JSON.stringify(recoveryControls));
     await page.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: 'Escape' });
     await page.waitFor(`!document.querySelector('.auth-modal')`);
     await page.send('Page.navigate', { url: `${baseUrl}/register` });
@@ -177,6 +197,48 @@ test('authorized account control shows email, cabinet action and logout', async 
     assert.ok(menu.menuRight <= 390 && menu.triggerRight <= 390);
     await page.evaluate(`document.querySelector('.header__account-menu button').click()`);
     await page.waitFor(`document.querySelector('.header__mobile-login')?.textContent.includes('Войти')`);
+  } finally {
+    await page.close();
+  }
+});
+
+test('successful login opens the account in a new browser tab without a second click', async () => {
+  const page = await openBrowser('about:blank');
+  try {
+    page.on('Fetch.requestPaused', async ({ request, requestId }) => {
+      const isLogin = request.url.includes('/api/v1/auth/login');
+      const body = isLogin
+        ? JSON.stringify({ user: { id: '1', email: 'client@example.com', firstName: 'Виталий', lastName: null, role: 'customer', emailVerified: true } })
+        : JSON.stringify({ message: 'Требуется вход' });
+      await page.send('Fetch.fulfillRequest', {
+        requestId,
+        responseCode: isLogin ? 200 : 401,
+        responseHeaders: [{ name: 'Content-Type', value: 'application/json' }],
+        body: Buffer.from(body).toString('base64'),
+      });
+    });
+    await page.send('Fetch.enable', { patterns: [{ urlPattern: '*api/v1/auth/me' }, { urlPattern: '*api/v1/auth/login' }] });
+    await page.send('Page.addScriptToEvaluateOnNewDocument', { source: `window.turnstile = { render: (_container, options) => { queueMicrotask(() => options.callback('test-turnstile-token')); return 1; }, remove: () => {} };` });
+    await page.send('Page.navigate', { url: `${baseUrl}/` });
+    await page.waitFor(`document.querySelector('.header__login')?.textContent.includes('Войти') && !document.querySelector('.header__login').disabled`);
+    const initialPageCount = (await page.listPages()).filter(({ url }) => /^https?:/.test(url)).length;
+    await page.evaluate(`document.querySelector('.header__login').click()`);
+    await page.waitFor(`Boolean(document.querySelector('.auth-modal__dialog'))`);
+    await page.evaluate(`(() => {
+      const setValue = (selector, value) => {
+        const input = document.querySelector(selector);
+        const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
+        setter.call(input, value);
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+      };
+      setValue('input[name="email"]', 'client@example.com');
+      setValue('input[name="password"]', 'Reliable password 7!');
+    })()`);
+    await page.waitFor(`!document.querySelector('.auth-form__submit').disabled`);
+    await page.click('.auth-form__submit');
+    await page.waitFor(`document.querySelector('.header__login')?.textContent.includes('client@example.com')`);
+    const pages = (await page.listPages()).filter(({ url }) => /^https?:/.test(url));
+    assert.equal(pages.length, initialPageCount + 1, JSON.stringify(pages.map(({ title, url }) => ({ title, url }))));
   } finally {
     await page.close();
   }

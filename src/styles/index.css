@@ -5,6 +5,7 @@
   color: #202434;
   background: #ffffff;
   font-synthesis: none;
+  scrollbar-gutter: stable;
 }
 
 * {

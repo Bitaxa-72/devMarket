@@ -1,6 +1,7 @@
 import { ArrowLeft, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { authRequest } from '../lib/auth-api';
+import { getAccountUrl } from '../lib/site-urls';
 import { generatePassword } from '../utils/password';
 import { FormMessage, PasswordGuide, PasswordInput } from './AuthFormFields';
 import { TurnstileField } from './TurnstileField';
@@ -23,12 +24,18 @@ function LoginForm({ onAuthenticated, onModeChange }) {
 
   const submit = async (event) => {
     event.preventDefault();
+    const accountWindow = window.open('about:blank', '_blank');
+    if (accountWindow) accountWindow.opener = null;
     setError('');
     setPending(true);
     try {
       const response = await authRequest('/login', { method: 'POST', body: JSON.stringify({ email, password, turnstileToken, website }) });
+      const accountUrl = getAccountUrl('/account');
+      if (accountWindow) accountWindow.location.replace(accountUrl);
+      else window.open(accountUrl, '_blank', 'noopener,noreferrer');
       onAuthenticated(response.user);
     } catch (requestError) {
+      accountWindow?.close();
       setError(requestError.message);
       setTurnstileToken('');
       setChallengeKey((current) => current + 1);
@@ -181,12 +188,20 @@ export function AuthModal({ initialMode = 'login', isOpen, onAuthenticated, onCl
     if (!isOpen) return;
     setMode(initialMode);
     const previousOverflow = document.body.style.overflow;
+    const previousPaddingRight = document.body.style.paddingRight;
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+    const supportsStableGutter = window.CSS?.supports?.('scrollbar-gutter: stable') ?? false;
+    if (scrollbarWidth > 0 && !supportsStableGutter) {
+      const paddingRight = Number.parseFloat(window.getComputedStyle(document.body).paddingRight) || 0;
+      document.body.style.paddingRight = `${paddingRight + scrollbarWidth}px`;
+    }
     document.body.style.overflow = 'hidden';
     const frame = window.requestAnimationFrame(() => dialogRef.current?.querySelector('input')?.focus());
     const closeOnEscape = (event) => event.key === 'Escape' && onClose();
     window.addEventListener('keydown', closeOnEscape);
     return () => {
       document.body.style.overflow = previousOverflow;
+      document.body.style.paddingRight = previousPaddingRight;
       window.cancelAnimationFrame(frame);
       window.removeEventListener('keydown', closeOnEscape);
     };
