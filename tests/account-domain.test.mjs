@@ -9,6 +9,8 @@ const accountLayoutSource = existsSync(accountLayoutUrl) ? readFileSync(accountL
 const accountPagesSource = readFileSync(new URL('../src/pages/AccountPages.jsx', import.meta.url), 'utf8');
 const commercePagesSource = readFileSync(new URL('../src/pages/CommercePages.jsx', import.meta.url), 'utf8');
 const authPagesSource = readFileSync(new URL('../src/pages/AuthPages.jsx', import.meta.url), 'utf8');
+const siteLayoutSource = readFileSync(new URL('../src/components/SiteLayout.jsx', import.meta.url), 'utf8');
+const sessionLinkSource = readFileSync(new URL('../src/components/SessionAccountLink.jsx', import.meta.url), 'utf8');
 
 test('account hostname uses an isolated account route tree', () => {
   assert.match(appSource, /isAccountHost\(window\.location\.hostname\)/);
@@ -18,9 +20,32 @@ test('account hostname uses an isolated account route tree', () => {
 });
 
 test('public authentication stays on the main website', () => {
-  assert.match(headerSource, /to="\/login"/);
+  assert.match(sessionLinkSource, /to="\/login"/);
   assert.match(appSource, /path="login" element=\{<LoginPage \/>\}/);
   assert.match(appSource, /path="register" element=\{<RegisterPage \/>\}/);
+});
+
+test('public header reflects the shared authenticated session', () => {
+  assert.match(siteLayoutSource, /authRequest\('\/me'\)/);
+  assert.match(headerSource, /<SessionAccountLink/);
+  assert.match(sessionLinkSource, /getAccountUrl\('\/account'\)/);
+  assert.match(sessionLinkSource, /target="_blank"/);
+  assert.match(sessionLinkSource, /Личный кабинет/);
+});
+
+test('authenticated visitors do not see login or registration forms', () => {
+  assert.match(authPagesSource, /function AuthEntryGate/);
+  assert.match(authPagesSource, /Вы уже вошли/);
+  assert.match(authPagesSource, /Открыть личный кабинет/);
+});
+
+test('password reset without a token does not render password fields', () => {
+  assert.match(authPagesSource, /if \(!token\) return <InvalidResetLink/);
+  assert.match(authPagesSource, /Запросить новую ссылку/);
+});
+
+test('authentication redirects preserve email token query parameters', () => {
+  assert.match(appSource, /getPublicSiteUrl\(`\$\{path\}\$\{window\.location\.search\}`\)/);
 });
 
 test('successful login continues on the account subdomain', () => {

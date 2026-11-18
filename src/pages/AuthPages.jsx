@@ -1,6 +1,6 @@
 import { Check, Eye, EyeOff, RefreshCw } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useOutletContext, useSearchParams } from 'react-router-dom';
 import { AuthTabs } from '../components/AuthTabs';
 import { TurnstileField } from '../components/TurnstileField';
 import { authRequest } from '../lib/auth-api';
@@ -107,6 +107,42 @@ function FormMessage({ error, message }) {
   );
 }
 
+function AuthEntryGate({ children }) {
+  const { authSession } = useOutletContext();
+
+  if (authSession.status === 'loading') {
+    return (
+      <AuthLayout title="Проверяем вход" description="Сверяем действующую сессию личного кабинета.">
+        <div className="auth-session-state" role="status"><span className="auth-session-state__loader" />Проверяем доступ…</div>
+      </AuthLayout>
+    );
+  }
+
+  if (authSession.status === 'authorized') {
+    const firstName = authSession.user?.firstName;
+    return (
+      <AuthLayout title={firstName ? `${firstName}, вы уже вошли` : 'Вы уже вошли'} description="Повторный вход и регистрация не нужны — ваша сессия активна.">
+        <div className="auth-session-state auth-session-state--authorized">
+          <Check size={22} />
+          <span>Личный кабинет готов к работе.</span>
+        </div>
+        <a className="ui-button ui-button--primary auth-session-state__action" href={getAccountUrl('/account')} rel="noreferrer" target="_blank">Открыть личный кабинет</a>
+      </AuthLayout>
+    );
+  }
+
+  return children;
+}
+
+function InvalidResetLink() {
+  return (
+    <AuthLayout title="Ссылка недействительна" description="В адресе нет кода восстановления. Запросите новое письмо и откройте ссылку из него целиком.">
+      <div className="auth-session-state auth-session-state--invalid">Поля нового пароля доступны только по персональной ссылке из письма.</div>
+      <Link className="ui-button ui-button--primary auth-session-state__action" to="/forgot-password">Запросить новую ссылку</Link>
+    </AuthLayout>
+  );
+}
+
 export function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -136,7 +172,7 @@ export function LoginPage() {
   };
 
   return (
-    <AuthLayout tabs title="Вход" description="Введите email и пароль, указанные при регистрации.">
+    <AuthEntryGate><AuthLayout tabs title="Вход" description="Введите email и пароль, указанные при регистрации.">
       <form className="auth-form" onSubmit={submit}>
         <label className="auth-form__field">
           <span>Email</span>
@@ -149,7 +185,7 @@ export function LoginPage() {
           {pending ? 'Входим…' : 'Войти'}
         </button>
       </form>
-    </AuthLayout>
+    </AuthLayout></AuthEntryGate>
   );
 }
 
@@ -190,7 +226,7 @@ export function RegisterPage() {
   };
 
   return (
-    <AuthLayout tabs title="Регистрация" description="Создайте аккаунт и подтвердите email по ссылке из письма.">
+    <AuthEntryGate><AuthLayout tabs title="Регистрация" description="Создайте аккаунт и подтвердите email по ссылке из письма.">
       <form className="auth-form" onSubmit={submit}>
         <label className="auth-form__field"><span>Имя</span><input autoComplete="given-name" maxLength={80} name="firstName" onChange={update} value={form.firstName} /></label>
         <label className="auth-form__field"><span>Email</span><input autoComplete="email" inputMode="email" name="email" onChange={update} required type="email" value={form.email} /></label>
@@ -201,7 +237,7 @@ export function RegisterPage() {
         <FormMessage error={result.error} message={result.message} />
         <button className="ui-button ui-button--primary auth-form__submit" disabled={pending || !turnstileToken} type="submit">{pending ? 'Создаём аккаунт…' : 'Создать аккаунт'}</button>
       </form>
-    </AuthLayout>
+    </AuthLayout></AuthEntryGate>
   );
 }
 
@@ -253,6 +289,8 @@ export function ResetPasswordPage() {
     const password = generatePassword();
     setForm({ password, confirmation: password });
   };
+
+  if (!token) return <InvalidResetLink />;
 
   const submit = async (event) => {
     event.preventDefault();

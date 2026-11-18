@@ -23,7 +23,7 @@ function ExternalAccountRedirect({ path }) {
 }
 
 function ExternalPublicRedirect({ path }) {
-  window.location.replace(getPublicSiteUrl(path));
+  window.location.replace(getPublicSiteUrl(`${path}${window.location.search}`));
   return <main className="state-page">Открываем страницу входа…</main>;
 }
 

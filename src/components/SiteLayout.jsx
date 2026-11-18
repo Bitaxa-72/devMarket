@@ -5,6 +5,7 @@ import { CookieConsent } from './CookieConsent';
 import { Footer } from './Footer';
 import { Header } from './Header';
 import { TrustBand } from './TrustBand';
+import { authRequest } from '../lib/auth-api';
 import { animateProductToCart } from '../utils/cart-animation';
 
 const pageMeta = [
@@ -35,10 +36,21 @@ export function SiteLayout() {
   const previousPathnameRef = useRef(null);
   const [isContactsOpen, setIsContactsOpen] = useState(false);
   const [contactSubject, setContactSubject] = useState('');
+  const [authSession, setAuthSession] = useState({ status: 'loading', user: null });
   const [cartItems, setCartItems] = useState(() => {
     const savedCart = window.localStorage.getItem('devmarket-cart');
     return savedCart ? JSON.parse(savedCart) : [];
   });
+
+  useEffect(() => {
+    let active = true;
+    authRequest('/me')
+      .then(({ user }) => active && setAuthSession({ status: 'authorized', user }))
+      .catch(() => active && setAuthSession({ status: 'unauthorized', user: null }));
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     const previousPathname = previousPathnameRef.current;
@@ -95,8 +107,8 @@ export function SiteLayout() {
 
   return (
     <>
-      <Header onOpenContacts={openContacts} cartCount={cartCount} />
-      <Outlet context={{ addToCart, cartItems, clearCart, onOpenContacts: openContacts, updateCartItem }} />
+      <Header authSession={authSession} onOpenContacts={openContacts} cartCount={cartCount} />
+      <Outlet context={{ addToCart, authSession, cartItems, clearCart, onOpenContacts: openContacts, updateCartItem }} />
       {location.pathname !== '/' && !isAuthPage && <TrustBand />}
       {!isAuthPage && <Footer onOpenContacts={openContacts} />}
       <ContactModal isOpen={isContactsOpen} onClose={() => setIsContactsOpen(false)} subject={contactSubject} />
