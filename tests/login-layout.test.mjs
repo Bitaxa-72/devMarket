@@ -64,6 +64,7 @@ test('login panel fills the available viewport and centers both columns', async 
       const response = await send('Runtime.evaluate', {
         expression: `(() => {
           const header = document.querySelector('.header, .account-site__header')?.getBoundingClientRect();
+          const headerTop = document.querySelector('.header__top')?.getBoundingClientRect();
           const dock = document.querySelector('.header__mobile-dock')?.getBoundingClientRect();
           const page = document.querySelector('.auth-page')?.getBoundingClientRect();
           const visual = document.querySelector('.auth-page__visual');
@@ -72,12 +73,15 @@ test('login panel fills the available viewport and centers both columns', async 
           const visualLast = visual?.lastElementChild?.getBoundingClientRect();
           const formWrap = document.querySelector('.auth-page__form-wrap')?.getBoundingClientRect();
           const form = document.querySelector('.auth-page__form')?.getBoundingClientRect();
+          const submit = document.querySelector('.auth-form__submit')?.getBoundingClientRect();
+          const forgot = document.querySelector('.auth-form__field-action a[href="/forgot-password"]')?.getBoundingClientRect();
           return {
             viewportHeight: innerHeight,
             viewportWidth: innerWidth,
             documentWidth: document.documentElement.scrollWidth,
             documentHeight: document.documentElement.scrollHeight,
             headerBottom: header?.bottom,
+            headerTopHeight: headerTop?.height,
             dockTop: dock?.top,
             pageTop: page?.top,
             pageBottom: page?.bottom,
@@ -87,6 +91,7 @@ test('login panel fills the available viewport and centers both columns', async 
             formCenterGap: formWrap && form ? Math.abs((form.top + form.bottom) / 2 - (formWrap.top + formWrap.bottom) / 2) : null,
             formTop: form?.top,
             formBottom: form?.bottom,
+            authActionGap: submit && forgot ? submit.top - forgot.bottom : null,
             authTabCount: document.querySelectorAll('.auth-tabs__link').length,
             activeAuthTab: document.querySelector('.auth-tabs__link--active')?.textContent?.trim(),
             forgotUnderPasswordInput: (() => {
@@ -115,6 +120,8 @@ test('login panel fills the available viewport and centers both columns', async 
     assert.equal(desktop.authTabCount, 2);
     assert.equal(desktop.activeAuthTab, 'Вход');
     assert.equal(desktop.forgotUnderPasswordInput, true);
+    assert.ok(desktop.authActionGap <= 36, JSON.stringify(desktop));
+    assert.ok(desktop.headerTopHeight <= 80, JSON.stringify(desktop));
     assert.equal(desktop.turnstilePresent, true);
     assert.equal(desktop.turnstileConfigurationError, false);
 

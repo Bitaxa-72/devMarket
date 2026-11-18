@@ -68,7 +68,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   width: 100%;
-  height: calc(100dvh - 174px);
+  height: calc(100dvh - 146px);
   min-height: 0;
   overflow-x: hidden;
 }
@@ -301,11 +301,11 @@
 
 .turnstile-field {
   position: relative;
-  min-height: 36px;
+  min-height: 0;
 }
 
 .turnstile-field__widget {
-  min-height: 36px;
+  min-height: 0;
 }
 
 .turnstile-field__error {
