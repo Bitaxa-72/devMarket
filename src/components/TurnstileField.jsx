@@ -37,7 +37,7 @@ export function TurnstileField({ action, onVerify, resetKey, website, onWebsiteC
         widgetId = turnstile.render(container.current, {
           sitekey: SITE_KEY,
           action,
-          appearance: 'interaction-only',
+          appearance: 'always',
           size: 'flexible',
           callback: onVerify,
           'expired-callback': () => onVerify(''),

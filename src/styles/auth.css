@@ -301,11 +301,11 @@
 
 .turnstile-field {
   position: relative;
-  min-height: 0;
+  min-height: 65px;
 }
 
 .turnstile-field__widget {
-  min-height: 0;
+  min-height: 65px;
 }
 
 .turnstile-field__error {

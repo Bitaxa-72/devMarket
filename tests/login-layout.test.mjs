@@ -53,12 +53,13 @@ test('login panel fills the available viewport and centers both columns', async 
       pending.set(commandId, resolve);
       socket.send(JSON.stringify({ id: commandId, method, params }));
     });
-    await send('Page.addScriptToEvaluateOnNewDocument', {
-      source: `window.turnstile = {
-        render(element, options) { element.dataset.testWidget = 'ready'; options.callback('test-turnstile-token'); return 'test-widget'; },
-        remove() {}
-      };`,
-    });
+    const waitForTurnstile = async () => {
+      for (let attempt = 0; attempt < 40; attempt += 1) {
+        const response = await send('Runtime.evaluate', { expression: "Boolean(document.querySelector('.turnstile-field__widget')?.children.length)", returnByValue: true });
+        if (response.result.result.value) return;
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+    };
 
     const inspect = async () => {
       const response = await send('Runtime.evaluate', {
@@ -75,6 +76,7 @@ test('login panel fills the available viewport and centers both columns', async 
           const form = document.querySelector('.auth-page__form')?.getBoundingClientRect();
           const submit = document.querySelector('.auth-form__submit')?.getBoundingClientRect();
           const forgot = document.querySelector('.auth-form__field-action a[href="/forgot-password"]')?.getBoundingClientRect();
+          const turnstile = document.querySelector('.turnstile-field')?.getBoundingClientRect();
           return {
             viewportHeight: innerHeight,
             viewportWidth: innerWidth,
@@ -92,6 +94,8 @@ test('login panel fills the available viewport and centers both columns', async 
             formTop: form?.top,
             formBottom: form?.bottom,
             authActionGap: submit && forgot ? submit.top - forgot.bottom : null,
+            turnstileHeight: turnstile?.height,
+            turnstileSubmitGap: submit && turnstile ? submit.top - turnstile.bottom : null,
             authTabCount: document.querySelectorAll('.auth-tabs__link').length,
             activeAuthTab: document.querySelector('.auth-tabs__link--active')?.textContent?.trim(),
             forgotUnderPasswordInput: (() => {
@@ -110,7 +114,7 @@ test('login panel fills the available viewport and centers both columns', async 
 
     await send('Emulation.setDeviceMetricsOverride', { width: 1440, height: 900, deviceScaleFactor: 1, mobile: false });
     await send('Page.reload');
-    await new Promise((resolve) => setTimeout(resolve, 600));
+    await waitForTurnstile();
     const desktop = await inspect();
     assert.ok(Math.abs(desktop.pageTop - desktop.headerBottom) < 1, JSON.stringify(desktop));
     assert.ok(Math.abs(desktop.pageBottom - desktop.viewportHeight) < 1, JSON.stringify(desktop));
@@ -120,14 +124,15 @@ test('login panel fills the available viewport and centers both columns', async 
     assert.equal(desktop.authTabCount, 2);
     assert.equal(desktop.activeAuthTab, 'Вход');
     assert.equal(desktop.forgotUnderPasswordInput, true);
-    assert.ok(desktop.authActionGap <= 36, JSON.stringify(desktop));
     assert.ok(desktop.headerTopHeight <= 80, JSON.stringify(desktop));
     assert.equal(desktop.turnstilePresent, true);
     assert.equal(desktop.turnstileConfigurationError, false);
+    assert.ok(desktop.turnstileHeight >= 65, JSON.stringify(desktop));
+    assert.ok(desktop.turnstileSubmitGap <= 20, JSON.stringify(desktop));
 
     await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
     await send('Page.reload');
-    await new Promise((resolve) => setTimeout(resolve, 600));
+    await waitForTurnstile();
     const mobile = await inspect();
     assert.equal(mobile.pageTop, 0, JSON.stringify(mobile));
     assert.equal(mobile.pageHeight, mobile.viewportHeight);
