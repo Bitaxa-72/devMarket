@@ -207,20 +207,31 @@ test('successful login opens the account in a new browser tab without a second c
   try {
     page.on('Fetch.requestPaused', async ({ request, requestId }) => {
       const isLogin = request.url.includes('/api/v1/auth/login');
+      const responseHeaders = [
+        { name: 'Content-Type', value: 'application/json' },
+        { name: 'Access-Control-Allow-Origin', value: new URL(baseUrl).origin },
+        { name: 'Access-Control-Allow-Credentials', value: 'true' },
+        { name: 'Access-Control-Allow-Headers', value: 'Content-Type' },
+        { name: 'Access-Control-Allow-Methods', value: 'POST, GET, OPTIONS' },
+      ];
+      if (request.method === 'OPTIONS') {
+        await page.send('Fetch.fulfillRequest', { requestId, responseCode: 204, responseHeaders });
+        return;
+      }
       const body = isLogin
         ? JSON.stringify({ user: { id: '1', email: 'client@example.com', firstName: 'Виталий', lastName: null, role: 'customer', emailVerified: true } })
         : JSON.stringify({ message: 'Требуется вход' });
       await page.send('Fetch.fulfillRequest', {
         requestId,
         responseCode: isLogin ? 200 : 401,
-        responseHeaders: [{ name: 'Content-Type', value: 'application/json' }],
+        responseHeaders,
         body: Buffer.from(body).toString('base64'),
       });
     });
     await page.send('Fetch.enable', { patterns: [{ urlPattern: '*api/v1/auth/me' }, { urlPattern: '*api/v1/auth/login' }] });
-    await page.send('Page.addScriptToEvaluateOnNewDocument', { source: `window.turnstile = { render: (_container, options) => { queueMicrotask(() => options.callback('test-turnstile-token')); return 1; }, remove: () => {} };` });
     await page.send('Page.navigate', { url: `${baseUrl}/` });
     await page.waitFor(`document.querySelector('.header__login')?.textContent.includes('Войти') && !document.querySelector('.header__login').disabled`);
+    await page.evaluate(`window.turnstile = { render: (_container, options) => { queueMicrotask(() => options.callback('test-turnstile-token')); return 1; }, remove: () => {} }`);
     const initialPageCount = (await page.listPages()).filter(({ url }) => /^https?:/.test(url)).length;
     await page.evaluate(`document.querySelector('.header__login').click()`);
     await page.waitFor(`Boolean(document.querySelector('.auth-modal__dialog'))`);
@@ -237,8 +248,14 @@ test('successful login opens the account in a new browser tab without a second c
     await page.waitFor(`!document.querySelector('.auth-form__submit').disabled`);
     await page.click('.auth-form__submit');
     await page.waitFor(`document.querySelector('.header__login')?.textContent.includes('client@example.com')`);
-    const pages = (await page.listPages()).filter(({ url }) => /^https?:/.test(url));
-    assert.equal(pages.length, initialPageCount + 1, JSON.stringify(pages.map(({ title, url }) => ({ title, url }))));
+    let pages = [];
+    for (let attempt = 0; attempt < 60; attempt += 1) {
+      pages = await page.listPages();
+      if (pages.filter(({ url }) => /^https?:/.test(url)).length === initialPageCount + 1) break;
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+    const httpPages = pages.filter(({ url }) => /^https?:/.test(url));
+    assert.equal(httpPages.length, initialPageCount + 1, JSON.stringify(pages.map(({ title, url }) => ({ title, url }))));
   } finally {
     await page.close();
   }
