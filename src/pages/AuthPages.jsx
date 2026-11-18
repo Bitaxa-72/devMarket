@@ -1,6 +1,8 @@
 import { Check, Eye, EyeOff, RefreshCw } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { AuthTabs } from '../components/AuthTabs';
+import { TurnstileField } from '../components/TurnstileField';
 import { authRequest } from '../lib/auth-api';
 import { getAccountUrl } from '../lib/site-urls';
 import {
@@ -9,7 +11,7 @@ import {
   getPasswordStrength,
 } from '../utils/password';
 
-function AuthLayout({ title, description, children }) {
+function AuthLayout({ title, description, children, tabs = false }) {
   return (
     <main className="auth-page">
       <section className="auth-page__visual">
@@ -24,7 +26,7 @@ function AuthLayout({ title, description, children }) {
       </section>
       <section className="auth-page__form-wrap">
         <div className="auth-page__form">
-          <span className="auth-page__eyebrow">Личный кабинет</span>
+          {tabs ? <AuthTabs /> : <span className="auth-page__eyebrow">Личный кабинет</span>}
           <h2>{title}</h2>
           <p>{description}</p>
           {children}
@@ -34,17 +36,18 @@ function AuthLayout({ title, description, children }) {
   );
 }
 
-function PasswordInput({ autoComplete, name, value, onChange, label = 'Пароль' }) {
+function PasswordInput({ autoComplete, name, value, onChange, label = 'Пароль', labelAction }) {
   const [visible, setVisible] = useState(false);
 
   return (
-    <label className="auth-form__field">
-      <span>{label}</span>
+    <div className="auth-form__field">
+      <label htmlFor={name}>{label}</label>
       <span className="auth-form__password">
         <input
           autoComplete={autoComplete}
           maxLength={128}
           minLength={12}
+          id={name}
           name={name}
           onChange={onChange}
           required
@@ -59,7 +62,8 @@ function PasswordInput({ autoComplete, name, value, onChange, label = 'Паро�
           {visible ? <EyeOff size={18} /> : <Eye size={18} />}
         </button>
       </span>
-    </label>
+      {labelAction && <span className="auth-form__field-action">{labelAction}</span>}
+    </div>
   );
 }
 
@@ -108,6 +112,9 @@ export function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [pending, setPending] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState('');
+  const [website, setWebsite] = useState('');
+  const [challengeKey, setChallengeKey] = useState(0);
 
   const submit = async (event) => {
     event.preventDefault();
@@ -116,33 +123,32 @@ export function LoginPage() {
     try {
       await authRequest('/login', {
         method: 'POST',
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, turnstileToken, website }),
       });
       window.location.assign(getAccountUrl('/account'));
     } catch (requestError) {
       setError(requestError.message);
+      setTurnstileToken('');
+      setChallengeKey((current) => current + 1);
     } finally {
       setPending(false);
     }
   };
 
   return (
-    <AuthLayout title="Вход" description="Введите email и пароль, указанные при регистрации.">
+    <AuthLayout tabs title="Вход" description="Введите email и пароль, указанные при регистрации.">
       <form className="auth-form" onSubmit={submit}>
         <label className="auth-form__field">
           <span>Email</span>
           <input autoComplete="email" inputMode="email" name="email" onChange={(event) => setEmail(event.target.value)} required type="email" value={email} />
         </label>
-        <PasswordInput autoComplete="current-password" name="password" onChange={(event) => setPassword(event.target.value)} value={password} />
+        <PasswordInput autoComplete="current-password" labelAction={<Link to="/forgot-password">Забыли пароль?</Link>} name="password" onChange={(event) => setPassword(event.target.value)} value={password} />
+        <TurnstileField action="login" onVerify={setTurnstileToken} onWebsiteChange={(event) => setWebsite(event.target.value)} resetKey={challengeKey} website={website} />
         <FormMessage error={error} />
-        <button className="ui-button ui-button--primary auth-form__submit" disabled={pending} type="submit">
+        <button className="ui-button ui-button--primary auth-form__submit" disabled={pending || !turnstileToken} type="submit">
           {pending ? 'Входим…' : 'Войти'}
         </button>
       </form>
-      <div className="auth-page__links">
-        <Link to="/forgot-password">Забыли пароль?</Link>
-        <span>Нет аккаунта? <Link to="/register">Зарегистрироваться</Link></span>
-      </div>
     </AuthLayout>
   );
 }
@@ -151,6 +157,9 @@ export function RegisterPage() {
   const [form, setForm] = useState({ firstName: '', email: '', password: '', confirmation: '' });
   const [result, setResult] = useState({ error: '', message: '' });
   const [pending, setPending] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState('');
+  const [website, setWebsite] = useState('');
+  const [challengeKey, setChallengeKey] = useState(0);
   const update = (event) => setForm((current) => ({ ...current, [event.target.name]: event.target.value }));
   const generate = () => {
     const password = generatePassword();
@@ -168,28 +177,30 @@ export function RegisterPage() {
     try {
       const response = await authRequest('/register', {
         method: 'POST',
-        body: JSON.stringify({ firstName: form.firstName, email: form.email, password: form.password }),
+        body: JSON.stringify({ firstName: form.firstName, email: form.email, password: form.password, turnstileToken, website }),
       });
       setResult({ error: '', message: response.message });
     } catch (requestError) {
       setResult({ error: requestError.message, message: '' });
+      setTurnstileToken('');
+      setChallengeKey((current) => current + 1);
     } finally {
       setPending(false);
     }
   };
 
   return (
-    <AuthLayout title="Регистрация" description="Создайте аккаунт и подтвердите email по ссылке из письма.">
+    <AuthLayout tabs title="Регистрация" description="Создайте аккаунт и подтвердите email по ссылке из письма.">
       <form className="auth-form" onSubmit={submit}>
         <label className="auth-form__field"><span>Имя</span><input autoComplete="given-name" maxLength={80} name="firstName" onChange={update} value={form.firstName} /></label>
         <label className="auth-form__field"><span>Email</span><input autoComplete="email" inputMode="email" name="email" onChange={update} required type="email" value={form.email} /></label>
         <PasswordInput autoComplete="new-password" name="password" onChange={update} value={form.password} />
         <PasswordGuide onGenerate={generate} password={form.password} />
         <PasswordInput autoComplete="new-password" label="Повторите пароль" name="confirmation" onChange={update} value={form.confirmation} />
+        <TurnstileField action="register" onVerify={setTurnstileToken} onWebsiteChange={(event) => setWebsite(event.target.value)} resetKey={challengeKey} website={website} />
         <FormMessage error={result.error} message={result.message} />
-        <button className="ui-button ui-button--primary auth-form__submit" disabled={pending} type="submit">{pending ? 'Создаём аккаунт…' : 'Создать аккаунт'}</button>
+        <button className="ui-button ui-button--primary auth-form__submit" disabled={pending || !turnstileToken} type="submit">{pending ? 'Создаём аккаунт…' : 'Создать аккаунт'}</button>
       </form>
-      <div className="auth-page__links"><span>Уже зарегистрированы? <Link to="/login">Войти</Link></span></div>
     </AuthLayout>
   );
 }
@@ -198,16 +209,21 @@ export function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [result, setResult] = useState({ error: '', message: '' });
   const [pending, setPending] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState('');
+  const [website, setWebsite] = useState('');
+  const [challengeKey, setChallengeKey] = useState(0);
 
   const submit = async (event) => {
     event.preventDefault();
     setPending(true);
     setResult({ error: '', message: '' });
     try {
-      const response = await authRequest('/forgot-password', { method: 'POST', body: JSON.stringify({ email }) });
+      const response = await authRequest('/forgot-password', { method: 'POST', body: JSON.stringify({ email, turnstileToken, website }) });
       setResult({ error: '', message: response.message });
     } catch (requestError) {
       setResult({ error: requestError.message, message: '' });
+      setTurnstileToken('');
+      setChallengeKey((current) => current + 1);
     } finally {
       setPending(false);
     }
@@ -217,8 +233,9 @@ export function ForgotPasswordPage() {
     <AuthLayout title="Восстановление доступа" description="Отправим одноразовую ссылку для смены пароля на вашу почту.">
       <form className="auth-form" onSubmit={submit}>
         <label className="auth-form__field"><span>Email</span><input autoComplete="email" inputMode="email" onChange={(event) => setEmail(event.target.value)} required type="email" value={email} /></label>
+        <TurnstileField action="forgot_password" onVerify={setTurnstileToken} onWebsiteChange={(event) => setWebsite(event.target.value)} resetKey={challengeKey} website={website} />
         <FormMessage error={result.error} message={result.message} />
-        <button className="ui-button ui-button--primary auth-form__submit" disabled={pending} type="submit">{pending ? 'Отправляем…' : 'Получить ссылку'}</button>
+        <button className="ui-button ui-button--primary auth-form__submit" disabled={pending || !turnstileToken} type="submit">{pending ? 'Отправляем…' : 'Получить ссылку'}</button>
       </form>
       <div className="auth-page__links"><Link to="/login">Вернуться ко входу</Link></div>
     </AuthLayout>

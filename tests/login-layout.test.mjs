@@ -53,6 +53,12 @@ test('login panel fills the available viewport and centers both columns', async 
       pending.set(commandId, resolve);
       socket.send(JSON.stringify({ id: commandId, method, params }));
     });
+    await send('Page.addScriptToEvaluateOnNewDocument', {
+      source: `window.turnstile = {
+        render(element, options) { element.dataset.testWidget = 'ready'; options.callback('test-turnstile-token'); return 'test-widget'; },
+        remove() {}
+      };`,
+    });
 
     const inspect = async () => {
       const response = await send('Runtime.evaluate', {
@@ -81,6 +87,15 @@ test('login panel fills the available viewport and centers both columns', async 
             formCenterGap: formWrap && form ? Math.abs((form.top + form.bottom) / 2 - (formWrap.top + formWrap.bottom) / 2) : null,
             formTop: form?.top,
             formBottom: form?.bottom,
+            authTabCount: document.querySelectorAll('.auth-tabs__link').length,
+            activeAuthTab: document.querySelector('.auth-tabs__link--active')?.textContent?.trim(),
+            forgotUnderPasswordInput: (() => {
+              const link = document.querySelector('.auth-form__field-action a[href="/forgot-password"]')?.getBoundingClientRect();
+              const input = document.querySelector('input[name="password"]')?.getBoundingClientRect();
+              return Boolean(link && input && link.top >= input.bottom && Math.abs(link.right - input.right) < 2);
+            })(),
+            turnstilePresent: Boolean(document.querySelector('.turnstile-field')),
+            turnstileConfigurationError: Boolean(document.querySelector('.turnstile-field__error')),
           };
         })()`,
         returnByValue: true,
@@ -97,6 +112,11 @@ test('login panel fills the available viewport and centers both columns', async 
     assert.ok(desktop.visualCenterGap < 3, JSON.stringify(desktop));
     assert.ok(desktop.formCenterGap < 2);
     assert.equal(desktop.documentHeight, desktop.viewportHeight);
+    assert.equal(desktop.authTabCount, 2);
+    assert.equal(desktop.activeAuthTab, 'Вход');
+    assert.equal(desktop.forgotUnderPasswordInput, true);
+    assert.equal(desktop.turnstilePresent, true);
+    assert.equal(desktop.turnstileConfigurationError, false);
 
     await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
     await send('Page.reload');
