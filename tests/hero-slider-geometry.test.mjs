@@ -14,3 +14,12 @@ test('uses a smooth scalable clip path for the desktop hero image', () => {
   assert.match(styles, /\.hero-slider__frame\s*\{[^}]*inset:\s*-1px[^;]*-1px 0;/s);
   assert.doesNotMatch(styles, /\.hero-slider__frame\s*\{[^}]*clip-path:\s*polygon\(/s);
 });
+
+test('moves complete slides on a horizontal looping track', () => {
+  assert.match(component, /const renderedSlides = \[/);
+  assert.match(component, /onTransitionEnd=\{handleTrackTransitionEnd\}/);
+  assert.match(component, /--hero-track-index/);
+  assert.match(styles, /\.hero-slider__track\s*\{[^}]*display:\s*flex;[^}]*transform:\s*translate3d/s);
+  assert.match(styles, /\.hero-slider__slide\s*\{[^}]*flex:\s*0 0 100%;/s);
+  assert.doesNotMatch(styles, /\.hero-slider__slide\s*\{[^}]*opacity:/s);
+});

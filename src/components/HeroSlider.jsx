@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import termburgImage from '../assets/hero/termburg-desktop.png';
@@ -41,11 +41,22 @@ const slides = [
   },
 ];
 
+const renderedSlides = [
+  { key: 'clone-last', originalIndex: slides.length - 1, slide: slides[slides.length - 1], clone: true },
+  ...slides.map((slide, originalIndex) => ({ key: slide.id, originalIndex, slide, clone: false })),
+  { key: 'clone-first', originalIndex: 0, slide: slides[0], clone: true },
+];
+
 export function HeroSlider({ onOpenContacts }) {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [trackIndex, setTrackIndex] = useState(1);
+  const [transitionEnabled, setTransitionEnabled] = useState(true);
+  const [isAnimating, setIsAnimating] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [resetCount, setResetCount] = useState(0);
   const [reduceMotion, setReduceMotion] = useState(false);
+  const animationLock = useRef(false);
+  const transitionFrame = useRef(null);
   const activeSlide = slides[activeIndex];
 
   useEffect(() => {
@@ -59,25 +70,74 @@ export function HeroSlider({ onOpenContacts }) {
   }, []);
 
   useEffect(() => {
-    if (isPaused || reduceMotion) {
+    if (isPaused || reduceMotion || isAnimating) {
       return undefined;
     }
 
     const timer = window.setTimeout(() => {
-      setActiveIndex((currentIndex) => advanceSlideIndex(currentIndex, 1, slides.length));
+      changeSlide(1);
     }, AUTOPLAY_DELAY);
 
     return () => window.clearTimeout(timer);
-  }, [activeIndex, isPaused, reduceMotion, resetCount]);
+  }, [activeIndex, isAnimating, isPaused, reduceMotion, resetCount]);
+
+  useEffect(() => () => {
+    if (transitionFrame.current !== null) {
+      window.cancelAnimationFrame(transitionFrame.current);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isAnimating) return undefined;
+
+    const timer = window.setTimeout(() => finishTransition(), reduceMotion ? 0 : 560);
+    return () => window.clearTimeout(timer);
+  }, [isAnimating, reduceMotion, trackIndex]);
+
+  const finishTransition = () => {
+    let normalizedIndex = trackIndex;
+
+    if (trackIndex === 0) normalizedIndex = slides.length;
+    if (trackIndex === slides.length + 1) normalizedIndex = 1;
+
+    if (normalizedIndex !== trackIndex) {
+      setTransitionEnabled(false);
+      setTrackIndex(normalizedIndex);
+      transitionFrame.current = window.requestAnimationFrame(() => {
+        transitionFrame.current = window.requestAnimationFrame(() => setTransitionEnabled(true));
+      });
+    }
+
+    animationLock.current = false;
+    setIsAnimating(false);
+  };
 
   const changeSlide = (direction) => {
+    if (animationLock.current) return;
+
+    animationLock.current = true;
+    setIsAnimating(true);
+    setTransitionEnabled(!reduceMotion);
+    setTrackIndex((currentIndex) => currentIndex + direction);
     setActiveIndex((currentIndex) => advanceSlideIndex(currentIndex, direction, slides.length));
     setResetCount((count) => count + 1);
   };
 
   const selectSlide = (index) => {
+    if (animationLock.current || index === activeIndex) return;
+
+    animationLock.current = true;
+    setIsAnimating(true);
+    setTransitionEnabled(!reduceMotion);
+    setTrackIndex(index + 1);
     setActiveIndex(index);
     setResetCount((count) => count + 1);
+  };
+
+  const handleTrackTransitionEnd = (event) => {
+    if (event.target === event.currentTarget && event.propertyName === 'transform') {
+      finishTransition();
+    }
   };
 
   const handleKeyDown = (event) => {
@@ -118,12 +178,16 @@ export function HeroSlider({ onOpenContacts }) {
       </svg>
       <span className="hero-slider__status" aria-live="polite">Слайд {activeIndex + 1} из {slides.length}: {activeSlide.title}</span>
       <div className="hero-slider__viewport">
-        <div className="hero-slider__track">
-          {slides.map((slide, index) => {
-            const isActive = index === activeIndex;
+        <div
+          className={`hero-slider__track${transitionEnabled ? '' : ' hero-slider__track--static'}`}
+          style={{ '--hero-track-index': trackIndex }}
+          onTransitionEnd={handleTrackTransitionEnd}
+        >
+          {renderedSlides.map(({ clone, key, originalIndex, slide }) => {
+            const isActive = !clone && originalIndex === activeIndex;
 
             return (
-              <article className={`hero-slider__slide${isActive ? ' hero-slider__slide--active' : ''}`} aria-hidden={!isActive} key={slide.id}>
+              <article className={`hero-slider__slide${isActive ? ' hero-slider__slide--active' : ''}`} aria-hidden={clone || !isActive} key={key}>
                 <div className="hero-slider__container">
                   <div className="hero-slider__content">
                     <h1 className="hero-slider__title">{slide.title}</h1>
