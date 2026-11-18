@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -96,6 +96,10 @@ test('authorized account uses the session user in a compact full-width workspace
     await page.send('Fetch.enable', { patterns: [{ urlPattern: '*api/v1/auth/me' }, { urlPattern: '*api/v1/auth/logout' }] });
     await page.send('Page.navigate', { url: `${accountBaseUrl}/account` });
     await page.waitFor(`Boolean(document.querySelector('.account-workspace'))`);
+    if (process.env.DEVMARKET_ACCOUNT_SCREENSHOT) {
+      const screenshot = await page.send('Page.captureScreenshot', { format: 'png' });
+      writeFileSync(process.env.DEVMARKET_ACCOUNT_SCREENSHOT, Buffer.from(screenshot.result.data, 'base64'));
+    }
     const state = await page.evaluate(`(() => {
       const workspace = document.querySelector('.account-page__container').getBoundingClientRect();
       const content = document.querySelector('.account-page__content').getBoundingClientRect();
@@ -114,6 +118,10 @@ test('authorized account uses the session user in a compact full-width workspace
         workspaceWidth: workspace.width,
         contentWidth: content.width,
         viewportWidth: innerWidth,
+        balanceOffset: Math.abs(document.querySelector('.account-balance').getBoundingClientRect().top - document.querySelector('.account-user').getBoundingClientRect().top),
+        workspaceBackground: getComputedStyle(document.querySelector('.account-page__content')).backgroundColor,
+        navigation: [...document.querySelectorAll('.account-page__tab')].map((item) => item.textContent.trim()),
+        dashboard: Boolean(document.querySelector('.admin-dashboard')),
       };
     })()`);
     assert.equal(state.title, 'Здравствуйте, Виталий');
@@ -129,28 +137,84 @@ test('authorized account uses the session user in a compact full-width workspace
     assert.equal(state.logoutLabel, 'Выйти из аккаунта');
     assert.ok(state.workspaceWidth >= state.viewportWidth - 64, JSON.stringify(state));
     assert.ok(state.contentWidth > 900, JSON.stringify(state));
+    assert.ok(state.balanceOffset < 8, JSON.stringify(state));
+    assert.equal(state.workspaceBackground, 'rgb(255, 255, 255)');
+    assert.deepEqual(state.navigation, ['Дашборд', 'Магазин', 'Трекер', 'Пользователи', 'Чат', 'Новости', 'Портфолио', 'Акции']);
+    assert.equal(state.dashboard, true);
+    assert.equal(await page.evaluate(`document.querySelector('.admin-dashboard__notice')?.textContent.includes('Демонстрационные данные')`), true);
+    const dailyRevenue = await page.evaluate(`document.querySelector('.admin-dashboard__total')?.textContent.trim()`);
+    await page.evaluate(`document.querySelector('[data-period="week"]').click()`);
+    await page.waitFor(`document.querySelector('.admin-dashboard__total')?.textContent.trim() !== ${JSON.stringify(dailyRevenue)}`);
+    assert.equal(await page.evaluate(`Boolean(document.querySelector('.admin-dashboard__chart svg'))`), true);
+    await page.evaluate(`document.querySelector('[data-period="range"]').click()`);
+    assert.equal(await page.evaluate(`document.querySelectorAll('.admin-dashboard__date').length`), 2);
+    await page.evaluate(`document.querySelector('.account-page__group button').click()`);
+    assert.equal(await page.evaluate(`document.querySelector('.account-page__group button').getAttribute('aria-expanded')`), 'true');
+    assert.deepEqual(await page.evaluate(`[...document.querySelectorAll('.account-page__subtab')].map((item) => item.textContent.trim())`), ['Заказы', 'Каталог', 'Услуги']);
+    await page.evaluate(`document.querySelectorAll('.account-page__subtab')[1].click()`);
+    await page.waitFor(`location.search === '?section=store-catalog' && Boolean(document.querySelector('.admin-placeholder'))`);
+    assert.equal(await page.evaluate(`document.querySelector('.account-page__content').contains(document.querySelector('.admin-placeholder'))`), true);
+    await page.evaluate(`document.querySelector('.account-page__tab').click()`);
+    await page.waitFor(`Boolean(document.querySelector('.admin-dashboard__chart'))`);
     await page.send('Emulation.setDeviceMetricsOverride', { width: 600, height: 900, deviceScaleFactor: 1, mobile: false });
     const tablet = await page.evaluate(`({ viewportWidth: innerWidth, documentWidth: document.documentElement.scrollWidth, actionsRight: document.querySelector('.account-site__actions').getBoundingClientRect().right })`);
-    assert.equal(tablet.documentWidth, tablet.viewportWidth, JSON.stringify(tablet));
+    assert.ok(tablet.documentWidth <= tablet.viewportWidth, JSON.stringify(tablet));
     assert.ok(tablet.actionsRight <= tablet.viewportWidth, JSON.stringify(tablet));
     await page.send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
+    if (process.env.DEVMARKET_ACCOUNT_MOBILE_SCREENSHOT) {
+      const screenshot = await page.send('Page.captureScreenshot', { format: 'png' });
+      writeFileSync(process.env.DEVMARKET_ACCOUNT_MOBILE_SCREENSHOT, Buffer.from(screenshot.result.data, 'base64'));
+    }
     const mobile = await page.evaluate(`(() => ({
       viewportWidth: innerWidth,
       documentWidth: document.documentElement.scrollWidth,
       headerRight: document.querySelector('.account-site__header-container').getBoundingClientRect().right,
       sidebarDisplay: getComputedStyle(document.querySelector('.account-page__sidebar')).display,
       sidebarOverflow: getComputedStyle(document.querySelector('.account-page__sidebar')).overflowX,
+      sidebarHeight: document.querySelector('.account-page__sidebar').getBoundingClientRect().height,
+      dashboardTabHeight: document.querySelector('.account-page__tab').getBoundingClientRect().height,
       titleVisible: Boolean(document.querySelector('.account-site__title').getClientRects().length),
       roleVisible: Boolean(document.querySelector('.account-user__role').getClientRects().length),
     }))()`);
-    assert.equal(mobile.documentWidth, mobile.viewportWidth, JSON.stringify(mobile));
+    assert.ok(mobile.documentWidth <= mobile.viewportWidth, JSON.stringify(mobile));
     assert.ok(mobile.headerRight <= mobile.viewportWidth, JSON.stringify(mobile));
     assert.equal(mobile.sidebarDisplay, 'flex');
     assert.equal(mobile.sidebarOverflow, 'auto');
+    assert.ok(mobile.sidebarHeight < 120, JSON.stringify(mobile));
+    assert.ok(mobile.dashboardTabHeight < 60, JSON.stringify(mobile));
     assert.equal(mobile.titleVisible, true);
     assert.equal(mobile.roleVisible, false);
+    assert.equal(await page.evaluate(`getComputedStyle(document.querySelector('.account-page__content')).backgroundColor`), 'rgb(255, 255, 255)');
+    await page.send('Emulation.setDeviceMetricsOverride', { width: 320, height: 720, deviceScaleFactor: 1, mobile: true });
+    const smallMobile = await page.evaluate(`({ viewportWidth: innerWidth, documentWidth: document.documentElement.scrollWidth, contentRight: document.querySelector('.account-page__content').getBoundingClientRect().right })`);
+    assert.ok(smallMobile.documentWidth <= smallMobile.viewportWidth, JSON.stringify(smallMobile));
+    assert.ok(smallMobile.contentRight <= smallMobile.viewportWidth, JSON.stringify(smallMobile));
+    await page.send('Page.navigate', { url: `${accountBaseUrl}/account/payment` });
+    await page.waitFor(`location.pathname === '/account' && Boolean(document.querySelector('.admin-dashboard'))`);
     await page.evaluate(`document.querySelector('.account-site__logout').click()`);
     await page.waitFor(`location.pathname === '/' && location.search === ''`);
+  } finally {
+    await page.close();
+  }
+});
+
+test('customer account keeps its existing orders and payment navigation inside the white workspace', async () => {
+  const page = await openBrowser();
+  try {
+    page.on('Fetch.requestPaused', async ({ requestId }) => {
+      const body = JSON.stringify({ user: { id: '2', email: 'client@example.com', firstName: 'Анна', lastName: null, role: 'customer', emailVerified: true } });
+      await page.send('Fetch.fulfillRequest', { requestId, responseCode: 200, responseHeaders: [{ name: 'Content-Type', value: 'application/json' }], body: Buffer.from(body).toString('base64') });
+    });
+    await page.send('Fetch.enable', { patterns: [{ urlPattern: '*api/v1/auth/me' }] });
+    await page.send('Page.navigate', { url: `${accountBaseUrl}/account` });
+    await page.waitFor(`Boolean(document.querySelector('.account-panel'))`);
+    const state = await page.evaluate(`({ menu: [...document.querySelectorAll('.account-page__tab')].map((item) => item.textContent.trim()), heading: document.querySelector('.account-panel__heading h2')?.textContent.trim(), background: getComputedStyle(document.querySelector('.account-page__content')).backgroundColor })`);
+    assert.deepEqual(state.menu, ['Заказы', 'Оплата', 'Личные данные', 'Безопасность', 'Чат']);
+    assert.equal(state.heading, 'Мои проекты');
+    assert.equal(state.background, 'rgb(255, 255, 255)');
+    await page.send('Page.navigate', { url: `${accountBaseUrl}/account/payment` });
+    await page.waitFor(`Boolean(document.querySelector('.payment-page__container--embedded'))`);
+    assert.equal(await page.evaluate(`getComputedStyle(document.querySelector('.account-page__content')).backgroundColor`), 'rgb(255, 255, 255)');
   } finally {
     await page.close();
   }

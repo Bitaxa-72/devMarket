@@ -1,19 +1,14 @@
-import { CreditCard, ExternalLink, LockKeyhole, LogOut, MessageCircle, PackageCheck, UserRound } from 'lucide-react';
+import { BadgePercent, BriefcaseBusiness, ChevronDown, CreditCard, ExternalLink, LayoutDashboard, ListTodo, LockKeyhole, LogOut, MessageCircle, Newspaper, PackageCheck, Store, UserRound, UsersRound } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { accountBalance } from '../data/account-data';
+import { getAccountNavigation } from '../lib/account-navigation';
 import { authRequest } from '../lib/auth-api';
 import { getPublicSiteUrl } from '../lib/site-urls';
 import { Logo } from './Logo';
 import { useAccountSession } from './AccountSessionContext';
 
-const accountNavigation = [
-  { id: 'orders', label: 'Заказы', icon: PackageCheck, to: '/account' },
-  { id: 'payment', label: 'Оплата', icon: CreditCard, to: '/account/payment' },
-  { id: 'profile', label: 'Личные данные', icon: UserRound, to: '/account?tab=profile' },
-  { id: 'security', label: 'Безопасность', icon: LockKeyhole, to: '/account?tab=security' },
-  { id: 'chat', label: 'Чат', icon: MessageCircle, to: '/account?tab=chat' },
-];
+const navigationIcons = { orders: PackageCheck, payment: CreditCard, profile: UserRound, security: LockKeyhole, chat: MessageCircle, dashboard: LayoutDashboard, store: Store, tracker: ListTodo, users: UsersRound, news: Newspaper, portfolio: BriefcaseBusiness, promotions: BadgePercent };
 
 const roleLabels = { customer: 'Клиент', manager: 'Менеджер', admin: 'Администратор' };
 
@@ -30,6 +25,8 @@ export function AccountShell({ activeTab, children, title }) {
   const user = useAccountSession();
   const profile = getUserPresentation(user);
   const [logoutPending, setLogoutPending] = useState(false);
+  const [storeOpen, setStoreOpen] = useState(activeTab?.startsWith('store-'));
+  const accountNavigation = getAccountNavigation(user);
   const pageTitle = title || `Здравствуйте, ${profile.firstName}`;
   const logout = async () => {
     setLogoutPending(true);
@@ -58,10 +55,14 @@ export function AccountShell({ activeTab, children, title }) {
       </header>
       <section className="account-page">
         <div className="account-page__container">
-          <aside className="account-page__sidebar">
+          <aside className="account-page__sidebar" aria-label="Разделы кабинета">
             {accountNavigation.map((item) => {
-              const Icon = item.icon;
-              return <Link className={activeTab === item.id ? 'account-page__tab account-page__tab--active' : 'account-page__tab'} to={item.to} key={item.id}><Icon size={19} />{item.label}</Link>;
+              const Icon = navigationIcons[item.id];
+              if (item.children) return <div className="account-page__group" key={item.id}>
+                <button className={activeTab?.startsWith('store-') ? 'account-page__tab account-page__tab--active' : 'account-page__tab'} type="button" aria-expanded={storeOpen} onClick={() => setStoreOpen((value) => !value)}><Icon size={19} />{item.label}<ChevronDown className={storeOpen ? 'account-page__chevron account-page__chevron--open' : 'account-page__chevron'} size={16} /></button>
+                {storeOpen && <div className="account-page__subnav">{item.children.map((child) => <Link className={activeTab === child.id ? 'account-page__subtab account-page__subtab--active' : 'account-page__subtab'} aria-current={activeTab === child.id ? 'page' : undefined} to={child.to} key={child.id}>{child.label}</Link>)}</div>}
+              </div>;
+              return <Link className={activeTab === item.id ? 'account-page__tab account-page__tab--active' : 'account-page__tab'} aria-current={activeTab === item.id ? 'page' : undefined} to={item.to} key={item.id}><Icon size={19} />{item.label}</Link>;
             })}
           </aside>
           <div className="account-page__content">{children}</div>

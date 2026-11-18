@@ -1,13 +1,18 @@
 import { Check, Download, FileText, Send } from 'lucide-react';
 import { useState } from 'react';
-import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { Link, Navigate, useParams, useSearchParams } from 'react-router-dom';
 import { AccountShell } from '../components/AccountShell';
+import { useAccountSession } from '../components/AccountSessionContext';
 import { PaymentWorkspace } from '../components/PaymentWorkspace';
+import { AdminDashboard } from './AdminDashboard';
 import { accountOrders, getAccountOrder, orderStatuses } from '../data/account-data';
 import { getPublicSiteUrl } from '../lib/site-urls';
+import { getAdminSectionLabel, resolveAdminSection } from '../lib/account-navigation';
 
 export function AccountPage() {
+  const user = useAccountSession();
   const [searchParams] = useSearchParams();
+  const adminSection = resolveAdminSection(user, searchParams.get('section'));
   const requestedTab = searchParams.get('tab');
   const activeTab = ['profile', 'security', 'chat'].includes(requestedTab) ? requestedTab : 'orders';
   const [messages, setMessages] = useState([{ id: 1, author: 'manager', text: 'Здравствуйте! Здесь можно задать вопрос по заказу или новой задаче.', time: '10:30' }]);
@@ -21,6 +26,8 @@ export function AccountPage() {
     setMessage('');
   };
 
+  if (user?.role === 'admin') return <AccountShell activeTab={adminSection} title={adminSection && adminSection !== 'dashboard' ? getAdminSectionLabel(user, adminSection) : undefined}>{adminSection === 'dashboard' ? <AdminDashboard /> : <section className="admin-placeholder"><h2>{adminSection ? getAdminSectionLabel(user, adminSection) : 'Нет доступных разделов'}</h2><p>{adminSection ? 'Раздел появится здесь после подключения данных и рабочих инструментов.' : 'Администратор пока не получил доступ ни к одному разделу.'}</p></section>}</AccountShell>;
+
   return <AccountShell activeTab={activeTab}>{activeTab === 'orders' && <OrdersPanel />}{activeTab === 'profile' && <ProfilePanel />}{activeTab === 'security' && <SecurityPanel />}{activeTab === 'chat' && <ChatPanel messages={messages} message={message} setMessage={setMessage} sendMessage={sendMessage} />}</AccountShell>;
 }
 
@@ -33,8 +40,11 @@ function OrdersPanel() {
 }
 
 export function AccountOrderPage() {
+  const user = useAccountSession();
   const { orderId } = useParams();
   const order = getAccountOrder(orderId);
+
+  if (user?.role === 'admin') return <Navigate replace to="/account" />;
 
   if (!order) return <AccountShell activeTab="orders" title="Заказ не найден"><div className="account-panel account-panel--empty"><h2>Такого заказа нет</h2><p>Вернитесь к списку проектов и выберите доступный заказ.</p><Link className="ui-button ui-button--primary" to="/account">Вернуться к заказам</Link></div></AccountShell>;
 
@@ -43,6 +53,8 @@ export function AccountOrderPage() {
 }
 
 export function AccountPaymentPage() {
+  const user = useAccountSession();
+  if (user?.role === 'admin') return <Navigate replace to="/account" />;
   return <AccountShell activeTab="payment" title="Оплата и баланс"><PaymentWorkspace embedded /></AccountShell>;
 }
 
