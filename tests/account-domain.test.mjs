@@ -1,11 +1,9 @@
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 const appSource = readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8');
 const headerSource = readFileSync(new URL('../src/components/Header.jsx', import.meta.url), 'utf8');
-const accountLayoutUrl = new URL('../src/components/AccountLayout.jsx', import.meta.url);
-const accountLayoutSource = existsSync(accountLayoutUrl) ? readFileSync(accountLayoutUrl, 'utf8') : '';
 const accountPagesSource = readFileSync(new URL('../src/pages/AccountPages.jsx', import.meta.url), 'utf8');
 const commercePagesSource = readFileSync(new URL('../src/pages/CommercePages.jsx', import.meta.url), 'utf8');
 const siteLayoutSource = readFileSync(new URL('../src/components/SiteLayout.jsx', import.meta.url), 'utf8');
@@ -46,10 +44,6 @@ test('password reset without a token stays inside the modal and offers a new req
   assert.match(authModalSource, /Запросить новую ссылку/);
 });
 
-test('authentication redirects preserve email token query parameters', () => {
-  assert.match(appSource, /getPublicSiteUrl\(`\$\{path\}\$\{window\.location\.search\}`\)/);
-});
-
 test('successful modal login updates the shared session on the public site', () => {
   assert.match(authModalSource, /onAuthenticated\(response\.user\)/);
   assert.match(siteLayoutSource, /setAuthSession\(\{ status: 'authorized', user \}\)/);
@@ -57,12 +51,6 @@ test('successful modal login updates the shared session on the public site', () 
 
 test('home navigation is rendered before the catalog', () => {
   assert.match(headerSource, /to="\/"[^>]*>Главная<\/NavLink>[\s\S]*className="header__catalog"/);
-});
-
-test('account layout links back to the public website', () => {
-  assert.match(accountLayoutSource, /getPublicSiteUrl\(\)/);
-  assert.match(accountLayoutSource, /На основной сайт/);
-  assert.match(accountLayoutSource, /<Outlet \/>/);
 });
 
 test('cross-domain actions use absolute site URLs', () => {

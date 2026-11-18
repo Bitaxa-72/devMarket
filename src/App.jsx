@@ -16,11 +16,6 @@ function ExternalAccountRedirect({ path }) {
   return <main className="state-page">Открываем личный кабинет…</main>;
 }
 
-function ExternalPublicRedirect({ path }) {
-  window.location.replace(getPublicSiteUrl(`${path}${window.location.search}`));
-  return <main className="state-page">Открываем страницу входа…</main>;
-}
-
 function LegacyResetRedirect() {
   const location = useLocation();
   const params = new URLSearchParams(location.search);
@@ -36,12 +31,7 @@ function AccountRoutes() {
         <Route path="account" element={<RequireAuth><AccountPage /></RequireAuth>} />
         <Route path="account/orders/:orderId" element={<RequireAuth><AccountOrderPage /></RequireAuth>} />
         <Route path="account/payment" element={<RequireAuth><AccountPaymentPage /></RequireAuth>} />
-        <Route path="login" element={<ExternalPublicRedirect path="/login" />} />
-        <Route path="register" element={<ExternalPublicRedirect path="/register" />} />
-        <Route path="forgot-password" element={<ExternalPublicRedirect path="/forgot-password" />} />
-        <Route path="reset-password" element={<ExternalPublicRedirect path="/reset-password" />} />
-        <Route path="verify-email" element={<ExternalPublicRedirect path="/verify-email" />} />
-        <Route path="*" element={<NotFoundPage />} />
+        <Route path="*" element={<Navigate replace to="/account" />} />
       </Route>
     </Routes>
   );

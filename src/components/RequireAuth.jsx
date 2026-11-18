@@ -1,28 +1,32 @@
 import { useEffect, useState } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
 import { authRequest } from '../lib/auth-api';
+import { getPublicSiteUrl } from '../lib/site-urls';
+import { AccountSessionProvider } from './AccountSessionContext';
 
 export function RequireAuth({ children }) {
-  const location = useLocation();
-  const [status, setStatus] = useState('loading');
+  const [session, setSession] = useState({ status: 'loading', user: null });
 
   useEffect(() => {
     let active = true;
     authRequest('/me')
-      .then(() => active && setStatus('authorized'))
-      .catch(() => active && setStatus('unauthorized'));
+      .then(({ user }) => active && setSession({ status: 'authorized', user }))
+      .catch(() => active && setSession({ status: 'unauthorized', user: null }));
     return () => {
       active = false;
     };
   }, []);
 
-  if (status === 'loading') {
+  useEffect(() => {
+    if (session.status === 'unauthorized') window.location.replace(getPublicSiteUrl('/?auth=login'));
+  }, [session.status]);
+
+  if (session.status === 'loading') {
     return <main className="account-access"><span className="account-access__loader" /><p>Проверяем доступ…</p></main>;
   }
 
-  if (status === 'unauthorized') {
-    return <Navigate replace state={{ from: location.pathname }} to="/login" />;
+  if (session.status === 'unauthorized') {
+    return <main className="account-access"><span className="account-access__loader" /><p>Открываем страницу входа…</p></main>;
   }
 
-  return children;
+  return <AccountSessionProvider value={session.user}>{children}</AccountSessionProvider>;
 }

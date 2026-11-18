@@ -92,7 +92,7 @@ test('account orders support additive status filters and open a dedicated detail
       specificationItems: document.querySelectorAll('.account-order__specification li').length,
       attachments: [...document.querySelectorAll('.account-order__attachment')].map((item) => item.textContent.trim()),
       sidebarItems: [...document.querySelectorAll('.account-page__tab')].map((item) => item.textContent.trim()),
-      logoutIsButton: document.querySelector('.account-page__logout')?.tagName,
+      logoutIsButton: document.querySelector('.account-site__logout')?.tagName,
     }))()`);
     assert.equal(detail.balanceLabel, 'Баланс');
     assert.equal(detail.balanceValue, '32 500 ₽');
@@ -100,7 +100,7 @@ test('account orders support additive status filters and open a dedicated detail
     assert.equal(detail.specificationItems, 4);
     assert.deepEqual(detail.attachments, ['Техническое задание.pdf', 'Сценарии бота.docx']);
     assert.deepEqual(detail.sidebarItems, ['Заказы', 'Оплата', 'Личные данные', 'Безопасность', 'Чат']);
-    assert.equal(detail.logoutIsButton, 'A');
+    assert.equal(detail.logoutIsButton, 'BUTTON');
 
     await send('Page.navigate', { url: 'http://127.0.0.1:5173/account' });
     await new Promise((resolve) => setTimeout(resolve, 200));
