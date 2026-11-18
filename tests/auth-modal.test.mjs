@@ -8,7 +8,8 @@ import test from 'node:test';
 
 const browser = 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe';
 const baseUrl = (process.env.DEVMARKET_TEST_URL || 'http://127.0.0.1:5173').replace(/\/$/, '');
-const expectedAccountHost = new URL(baseUrl).hostname === '127.0.0.1' ? '127.0.0.1' : 'lk.testvitalydomen.ru';
+const baseHostname = new URL(baseUrl).hostname;
+const expectedAccountHost = ['127.0.0.1', 'localhost'].includes(baseHostname) ? baseHostname : 'lk.testvitalydomen.ru';
 
 function availablePort() {
   return new Promise((resolve, reject) => {
@@ -75,10 +76,10 @@ async function openBrowser(url) {
     await send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: point.x, y: point.y, button: 'left', clickCount: 1 });
   };
   const close = async () => {
+    await send('Browser.close');
     socket.close();
-    child.kill();
-    await new Promise((resolve) => setTimeout(resolve, 250));
-    rmSync(profile, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
+    if (child.exitCode === null) await new Promise((resolve) => child.once('exit', resolve));
+    rmSync(profile, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 });
   };
   const listPages = async () => fetch(`http://127.0.0.1:${port}/json/list`)
     .then((response) => response.json())

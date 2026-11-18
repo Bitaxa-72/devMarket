@@ -7,6 +7,7 @@ import { join } from 'node:path';
 import test from 'node:test';
 
 const browser = 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe';
+const baseUrl = (process.env.DEVMARKET_TEST_URL || 'http://127.0.0.1:5173').replace(/\/$/, '');
 
 function getAvailablePort() {
   return new Promise((resolve, reject) => {
@@ -31,7 +32,7 @@ async function getPageState() {
     '--window-size=1440,1000',
     `--remote-debugging-port=${port}`,
     `--user-data-dir=${profile}`,
-    'http://127.0.0.1:5173/',
+    `${baseUrl}/`,
   ], { stdio: 'ignore' });
 
   try {
@@ -202,7 +203,7 @@ test('hero shows one large Termburg project without unrelated mockups', () => {
       '--no-first-run',
       '--dump-dom',
       `--user-data-dir=${profile}`,
-      'http://127.0.0.1:5173/',
+      `${baseUrl}/`,
     ], { encoding: 'utf8', timeout: 15000 });
 
     assert.equal(html.includes('alt="Termburg website"'), true, 'Termburg project is missing');
@@ -231,7 +232,7 @@ test('product cards use a large branded fallback without sequence numbers', () =
       '--no-first-run',
       '--dump-dom',
       `--user-data-dir=${profile}`,
-      'http://127.0.0.1:5173/',
+      `${baseUrl}/`,
     ], { encoding: 'utf8', timeout: 15000 });
 
     assert.equal(html.includes('product-card__brand-mark'), true, 'branded fallback is missing');

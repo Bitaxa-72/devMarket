@@ -7,6 +7,7 @@ import { join } from 'node:path';
 import test from 'node:test';
 
 const browser = 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe';
+const baseUrl = (process.env.DEVMARKET_TEST_URL || 'http://127.0.0.1:5173').replace(/\/$/, '');
 const pages = [
   ['/catalog', '.catalog-page__container'],
   ['/product/bots-1', '.product-detail__container'],
@@ -58,7 +59,7 @@ test('inner page containers align with the header container', async () => {
     '--window-size=1440,1000',
     `--remote-debugging-port=${port}`,
     `--user-data-dir=${profile}`,
-    'http://127.0.0.1:5173/payment',
+    `${baseUrl}/payment`,
   ], { stdio: 'ignore' });
 
   try {
@@ -80,7 +81,7 @@ test('inner page containers align with the header container', async () => {
     const send = createClient(socket);
 
     for (const [path, selector] of pages) {
-      await send('Page.navigate', { url: `http://127.0.0.1:5173${path}` });
+      await send('Page.navigate', { url: `${baseUrl}${path}` });
       await new Promise((resolve) => setTimeout(resolve, 350));
       const response = await send('Runtime.evaluate', {
         expression: `(() => {
@@ -140,7 +141,7 @@ test('inner page containers align with the header container', async () => {
         assert.equal(state.projectDetail.externalLink, 'https://selibox.com');
       }
     }
-    await send('Page.navigate', { url: 'http://127.0.0.1:5173/' });
+    await send('Page.navigate', { url: `${baseUrl}/` });
     await new Promise((resolve) => setTimeout(resolve, 350));
     const homeResponse = await send('Runtime.evaluate', {
       expression: "document.querySelectorAll('.trust-band').length",

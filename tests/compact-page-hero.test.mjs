@@ -7,6 +7,7 @@ import { join } from 'node:path';
 import test from 'node:test';
 
 const browser = 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe';
+const baseUrl = (process.env.DEVMARKET_TEST_URL || 'http://127.0.0.1:5173').replace(/\/$/, '');
 
 function getAvailablePort() {
   return new Promise((resolve, reject) => {
@@ -22,7 +23,7 @@ function getAvailablePort() {
 test('inner page introductions stay compact and expose primary content in the first viewport', async () => {
   const profile = mkdtempSync(join(tmpdir(), 'devmarket-compact-hero-test-'));
   const port = await getAvailablePort();
-  const browserProcess = spawn(browser, ['--headless=new', '--disable-gpu', '--disable-extensions', '--no-first-run', '--window-size=1440,900', `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`, 'http://127.0.0.1:5173/catalog'], { stdio: 'ignore' });
+  const browserProcess = spawn(browser, ['--headless=new', '--disable-gpu', '--disable-extensions', '--no-first-run', '--window-size=1440,900', `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`, `${baseUrl}/catalog`], { stdio: 'ignore' });
 
   try {
     let target;
@@ -55,7 +56,7 @@ test('inner page introductions stay compact and expose primary content in the fi
     });
 
     const inspectPage = async (path, primarySelector) => {
-      await send('Page.navigate', { url: `http://127.0.0.1:5173${path}` });
+      await send('Page.navigate', { url: `${baseUrl}${path}` });
       await new Promise((resolve) => setTimeout(resolve, 300));
       const response = await send('Runtime.evaluate', {
         expression: `(() => {

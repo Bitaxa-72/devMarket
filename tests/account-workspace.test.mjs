@@ -7,6 +7,7 @@ import { join } from 'node:path';
 import test from 'node:test';
 
 const browser = 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe';
+const baseUrl = (process.env.DEVMARKET_TEST_URL || 'http://127.0.0.1:5173').replace(/\/$/, '');
 
 function getAvailablePort() {
   return new Promise((resolve, reject) => {
@@ -22,7 +23,7 @@ function getAvailablePort() {
 test('account orders support additive status filters and open a dedicated detail route', async () => {
   const profile = mkdtempSync(join(tmpdir(), 'devmarket-account-test-'));
   const port = await getAvailablePort();
-  const browserProcess = spawn(browser, ['--headless=new', '--disable-gpu', '--disable-extensions', '--no-first-run', '--window-size=1440,900', `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`, 'http://127.0.0.1:5173/account'], { stdio: 'ignore' });
+  const browserProcess = spawn(browser, ['--headless=new', '--disable-gpu', '--disable-extensions', '--no-first-run', '--window-size=1440,900', `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`, `${baseUrl}/account`], { stdio: 'ignore' });
 
   try {
     let target;
@@ -58,7 +59,7 @@ test('account orders support additive status filters and open a dedicated detail
       return response.result.result.value;
     };
 
-    await send('Page.navigate', { url: 'http://127.0.0.1:5173/account' });
+    await send('Page.navigate', { url: `${baseUrl}/account` });
     await new Promise((resolve) => setTimeout(resolve, 350));
     const initial = await evaluate(`(() => ({
       filters: [...document.querySelectorAll('.order-filters__button')].map((item) => item.textContent.trim()),
@@ -102,13 +103,13 @@ test('account orders support additive status filters and open a dedicated detail
     assert.deepEqual(detail.sidebarItems, ['Заказы', 'Оплата', 'Личные данные', 'Безопасность', 'Чат']);
     assert.equal(detail.logoutIsButton, 'BUTTON');
 
-    await send('Page.navigate', { url: 'http://127.0.0.1:5173/account' });
+    await send('Page.navigate', { url: `${baseUrl}/account` });
     await new Promise((resolve) => setTimeout(resolve, 200));
     await evaluate(`[...document.querySelectorAll('.account-page__tab')].find((item) => item.textContent.trim() === 'Личные данные').click()`);
     await new Promise((resolve) => setTimeout(resolve, 100));
     assert.deepEqual(await evaluate(`[...document.querySelectorAll('.account-form input')].map((item) => item.name)`), ['firstName', 'lastName', 'email', 'phone', 'telegram', 'max', 'whatsapp']);
 
-    await send('Page.navigate', { url: 'http://127.0.0.1:5173/account/payment' });
+    await send('Page.navigate', { url: `${baseUrl}/account/payment` });
     await new Promise((resolve) => setTimeout(resolve, 200));
     const payment = await evaluate(`(() => ({
       methods: document.querySelectorAll('.payment-page__methods article').length,
@@ -124,7 +125,7 @@ test('account orders support additive status filters and open a dedicated detail
     assert.equal(payment.activeTab, 'Оплата');
 
     await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
-    await send('Page.navigate', { url: 'http://127.0.0.1:5173/account' });
+    await send('Page.navigate', { url: `${baseUrl}/account` });
     await new Promise((resolve) => setTimeout(resolve, 250));
     const mobile = await evaluate(`(() => ({
       viewportWidth: innerWidth,

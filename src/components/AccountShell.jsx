@@ -51,8 +51,8 @@ export function AccountShell({ activeTab, children, title }) {
               <span className="account-user__avatar" aria-hidden="true">{profile.initials}</span>
               <span className="account-user__details"><strong className="account-user__name">{profile.name}</strong><small className="account-user__role">{profile.role}</small></span>
             </div>
-            <a className="account-site__public-link" href={getPublicSiteUrl()}><span>На основной сайт</span><ExternalLink size={17} /></a>
-            <button className="account-site__logout" disabled={logoutPending} onClick={logout} type="button"><LogOut size={18} /><span>{logoutPending ? 'Выходим…' : 'Выйти'}</span></button>
+            <a aria-label="На основной сайт" className="account-site__public-link" href={getPublicSiteUrl()}><span>На основной сайт</span><ExternalLink size={17} /></a>
+            <button aria-label={logoutPending ? 'Выходим из аккаунта' : 'Выйти из аккаунта'} className="account-site__logout" disabled={logoutPending} onClick={logout} type="button"><LogOut size={18} /><span>{logoutPending ? 'Выходим…' : 'Выйти'}</span></button>
           </div>
         </div>
       </header>

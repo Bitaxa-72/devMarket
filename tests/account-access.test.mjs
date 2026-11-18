@@ -7,7 +7,8 @@ import { join } from 'node:path';
 import test from 'node:test';
 
 const browser = 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe';
-const baseUrl = (process.env.DEVMARKET_TEST_URL || 'http://127.0.0.1:5174').replace(/\/$/, '');
+const baseUrl = (process.env.DEVMARKET_TEST_URL || 'http://127.0.0.1:5173').replace(/\/$/, '');
+const accountBaseUrl = (process.env.DEVMARKET_ACCOUNT_TEST_URL || baseUrl).replace(/\/$/, '');
 
 function availablePort() {
   return new Promise((resolve, reject) => {
@@ -74,10 +75,10 @@ async function openBrowser() {
     listeners.set(method, values);
   };
   const close = async () => {
+    await send('Browser.close');
     socket.close();
-    child.kill();
-    await new Promise((resolve) => setTimeout(resolve, 250));
-    rmSync(profile, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
+    if (child.exitCode === null) await new Promise((resolve) => child.once('exit', resolve));
+    rmSync(profile, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 });
   };
   return { close, evaluate, on, send, waitFor };
 }
@@ -93,7 +94,7 @@ test('authorized account uses the session user in a compact full-width workspace
       await page.send('Fetch.fulfillRequest', { requestId, responseCode: 200, responseHeaders: [{ name: 'Content-Type', value: 'application/json' }], body: Buffer.from(body).toString('base64') });
     });
     await page.send('Fetch.enable', { patterns: [{ urlPattern: '*api/v1/auth/me' }, { urlPattern: '*api/v1/auth/logout' }] });
-    await page.send('Page.navigate', { url: `${baseUrl}/account` });
+    await page.send('Page.navigate', { url: `${accountBaseUrl}/account` });
     await page.waitFor(`Boolean(document.querySelector('.account-workspace'))`);
     const state = await page.evaluate(`(() => {
       const workspace = document.querySelector('.account-page__container').getBoundingClientRect();
@@ -108,6 +109,8 @@ test('authorized account uses the session user in a compact full-width workspace
         pageHero: Boolean(document.querySelector('.page-hero')),
         sidebarLogout: Boolean(document.querySelector('.account-page__sidebar .account-site__logout')),
         headerLogout: Boolean(document.querySelector('.account-site__header .account-site__logout')),
+        publicLinkLabel: document.querySelector('.account-site__public-link')?.getAttribute('aria-label'),
+        logoutLabel: document.querySelector('.account-site__logout')?.getAttribute('aria-label'),
         workspaceWidth: workspace.width,
         contentWidth: content.width,
         viewportWidth: innerWidth,
@@ -122,8 +125,14 @@ test('authorized account uses the session user in a compact full-width workspace
     assert.equal(state.pageHero, false);
     assert.equal(state.sidebarLogout, false);
     assert.equal(state.headerLogout, true);
+    assert.equal(state.publicLinkLabel, 'На основной сайт');
+    assert.equal(state.logoutLabel, 'Выйти из аккаунта');
     assert.ok(state.workspaceWidth >= state.viewportWidth - 64, JSON.stringify(state));
     assert.ok(state.contentWidth > 900, JSON.stringify(state));
+    await page.send('Emulation.setDeviceMetricsOverride', { width: 600, height: 900, deviceScaleFactor: 1, mobile: false });
+    const tablet = await page.evaluate(`({ viewportWidth: innerWidth, documentWidth: document.documentElement.scrollWidth, actionsRight: document.querySelector('.account-site__actions').getBoundingClientRect().right })`);
+    assert.equal(tablet.documentWidth, tablet.viewportWidth, JSON.stringify(tablet));
+    assert.ok(tablet.actionsRight <= tablet.viewportWidth, JSON.stringify(tablet));
     await page.send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
     const mobile = await page.evaluate(`(() => ({
       viewportWidth: innerWidth,
@@ -155,11 +164,31 @@ test('unauthorized account access opens the public home login modal without an a
       await page.send('Fetch.fulfillRequest', { requestId, responseCode: 401, responseHeaders: [{ name: 'Content-Type', value: 'application/json' }], body: Buffer.from(body).toString('base64') });
     });
     await page.send('Fetch.enable', { patterns: [{ urlPattern: '*api/v1/auth/me' }] });
-    await page.send('Page.navigate', { url: `${baseUrl}/account/payment` });
+    await page.send('Page.navigate', { url: `${accountBaseUrl}/account/payment` });
     await page.waitFor(`location.pathname === '/' && new URLSearchParams(location.search).get('auth') === 'login'`);
     await page.waitFor(`document.querySelector('.auth-modal__title')?.textContent.trim() === 'Вход'`);
     assert.equal(await page.evaluate(`Boolean(document.querySelector('.account-site'))`), false);
   } finally {
     await page.close();
+  }
+});
+
+test('account-host auth links preserve their mode and token on the public home modal', async () => {
+  for (const scenario of [
+    { path: '/reset-password?token=reset-token', expectedPath: '/', auth: 'reset', token: 'reset-token' },
+    { path: '/verify-email?token=verify-token', expectedPath: '/verify-email', token: 'verify-token' },
+  ]) {
+    const page = await openBrowser();
+    try {
+      page.on('Fetch.requestPaused', async ({ requestId }) => {
+        const body = JSON.stringify({ message: 'authentication required' });
+        await page.send('Fetch.fulfillRequest', { requestId, responseCode: 401, responseHeaders: [{ name: 'Content-Type', value: 'application/json' }], body: Buffer.from(body).toString('base64') });
+      });
+      await page.send('Fetch.enable', { patterns: [{ urlPattern: '*api/v1/auth/me' }] });
+      await page.send('Page.navigate', { url: `${accountBaseUrl}${scenario.path}` });
+      await page.waitFor(`location.origin === ${JSON.stringify(baseUrl)} && location.pathname === ${JSON.stringify(scenario.expectedPath)} && ${scenario.auth ? `new URLSearchParams(location.search).get('auth') === ${JSON.stringify(scenario.auth)} && ` : ''}new URLSearchParams(location.search).get('token') === ${JSON.stringify(scenario.token)}`);
+    } finally {
+      await page.close();
+    }
   }
 });

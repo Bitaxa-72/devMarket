@@ -7,6 +7,7 @@ import { join } from 'node:path';
 import test from 'node:test';
 
 const browser = 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe';
+const baseUrl = (process.env.DEVMARKET_TEST_URL || 'http://127.0.0.1:5173').replace(/\/$/, '');
 
 function getAvailablePort() {
   return new Promise((resolve, reject) => {
@@ -22,7 +23,7 @@ function getAvailablePort() {
 test('legal pages use the site width and cookie choice persists', async () => {
   const profile = mkdtempSync(join(tmpdir(), 'devmarket-legal-cookie-test-'));
   const port = await getAvailablePort();
-  const browserProcess = spawn(browser, ['--headless=new', '--disable-gpu', '--disable-extensions', '--no-first-run', '--window-size=1440,900', `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`, 'http://127.0.0.1:5173/offer'], { stdio: 'ignore' });
+  const browserProcess = spawn(browser, ['--headless=new', '--disable-gpu', '--disable-extensions', '--no-first-run', '--window-size=1440,900', `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`, `${baseUrl}/offer`], { stdio: 'ignore' });
 
   try {
     let target;
@@ -58,7 +59,7 @@ test('legal pages use the site width and cookie choice persists', async () => {
       return response.result.result.value;
     };
 
-    await send('Page.navigate', { url: 'http://127.0.0.1:5173/offer' });
+    await send('Page.navigate', { url: `${baseUrl}/offer` });
     await new Promise((resolve) => setTimeout(resolve, 300));
     const initial = await evaluate(`(() => ({
       legalWidth: document.querySelector('.legal-page').getBoundingClientRect().width,

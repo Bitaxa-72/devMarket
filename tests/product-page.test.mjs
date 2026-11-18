@@ -7,6 +7,7 @@ import { join } from 'node:path';
 import test from 'node:test';
 
 const browser = 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe';
+const baseUrl = (process.env.DEVMARKET_TEST_URL || 'http://127.0.0.1:5173').replace(/\/$/, '');
 
 function getAvailablePort() {
   return new Promise((resolve, reject) => {
@@ -22,7 +23,7 @@ function getAvailablePort() {
 test('product page presents a working gallery and category portfolio before purchase', async () => {
   const profile = mkdtempSync(join(tmpdir(), 'devmarket-product-page-test-'));
   const port = await getAvailablePort();
-  const browserProcess = spawn(browser, ['--headless=new', '--disable-gpu', '--disable-extensions', '--no-first-run', `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`, 'http://127.0.0.1:5173/product/bots-1'], { stdio: 'ignore' });
+  const browserProcess = spawn(browser, ['--headless=new', '--disable-gpu', '--disable-extensions', '--no-first-run', `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`, `${baseUrl}/product/bots-1`], { stdio: 'ignore' });
 
   try {
     let target;
