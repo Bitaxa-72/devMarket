@@ -7,6 +7,8 @@ import { join } from 'node:path';
 import test from 'node:test';
 
 const browser = 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe';
+const baseUrl = (process.env.DEVMARKET_TEST_URL || 'http://127.0.0.1:5173').replace(/\/$/, '');
+const expectedAccountHost = new URL(baseUrl).hostname === '127.0.0.1' ? '127.0.0.1' : 'lk.testvitalydomen.ru';
 
 function availablePort() {
   return new Promise((resolve, reject) => {
@@ -82,7 +84,7 @@ async function openBrowser(url) {
 }
 
 test('anonymous account control opens all authentication modes in one modal', async () => {
-  const page = await openBrowser('http://127.0.0.1:5173/');
+  const page = await openBrowser(`${baseUrl}/`);
   try {
     await page.waitFor(`document.querySelector('.header__login')?.textContent.includes('Войти') && !document.querySelector('.header__login').disabled`);
     assert.equal(await page.evaluate(`document.querySelector('.header__login').tagName`), 'BUTTON');
@@ -106,7 +108,7 @@ test('anonymous account control opens all authentication modes in one modal', as
     assert.equal(await page.evaluate(`document.querySelectorAll('.auth-modal input:not([name="website"])').length`), 1);
     await page.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: 'Escape' });
     await page.waitFor(`!document.querySelector('.auth-modal')`);
-    await page.send('Page.navigate', { url: 'http://127.0.0.1:5173/register' });
+    await page.send('Page.navigate', { url: `${baseUrl}/register` });
     await page.waitFor(`document.querySelector('.auth-modal__title')?.textContent.trim() === 'Регистрация'`);
     assert.equal(await page.evaluate(`location.pathname + location.search`), '/?auth=register');
   } finally {
@@ -131,7 +133,7 @@ test('authorized account control shows email, cabinet action and logout', async 
     });
     await page.send('Fetch.enable', { patterns: [{ urlPattern: '*api/v1/auth/me' }, { urlPattern: '*api/v1/auth/logout' }] });
     await page.send('Emulation.setDeviceMetricsOverride', { width: 390, height: 667, deviceScaleFactor: 1, mobile: true });
-    await page.send('Page.navigate', { url: 'http://127.0.0.1:5173/' });
+    await page.send('Page.navigate', { url: `${baseUrl}/` });
     await page.waitFor(`document.querySelector('.header__mobile-login')?.textContent.includes('client@example.com')`);
     await page.evaluate(`document.querySelector('.header__mobile-login').click()`);
     await page.waitFor(`Boolean(document.querySelector('.header__account-menu'))`);
@@ -143,7 +145,7 @@ test('authorized account control shows email, cabinet action and logout', async 
       triggerRight: document.querySelector('.header__mobile-login').getBoundingClientRect().right
     })`);
     assert.deepEqual(menu.labels, ['Личный кабинет', 'Выйти']);
-    assert.equal(menu.cabinetHost, '127.0.0.1');
+    assert.equal(menu.cabinetHost, expectedAccountHost);
     assert.equal(menu.cabinetTarget, '_blank');
     assert.ok(menu.menuRight <= 390 && menu.triggerRight <= 390);
     await page.evaluate(`document.querySelector('.header__account-menu button').click()`);
