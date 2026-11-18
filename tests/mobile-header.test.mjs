@@ -123,6 +123,7 @@ test('mobile header uses a five-item app dock with a matching more drawer', asyn
           headerTop: headerRect.top,
           logoTopGap: logoRect.top - headerRect.top,
           loginVisible: Boolean(login.getClientRects().length),
+          loginTagName: login.tagName,
           loginRight: loginRect.right,
           loginHref: login.getAttribute('href'),
           loginText: login.textContent.trim(),
@@ -181,7 +182,8 @@ test('mobile header uses a five-item app dock with a matching more drawer', asyn
     assert.ok(Math.abs(state.headerTop) < 1);
     assert.ok(state.logoTopGap >= 10);
     assert.equal(state.loginVisible, true);
-    assert.equal(state.loginHref, '/login');
+    assert.equal(state.loginHref, null);
+    assert.equal(state.loginTagName, 'BUTTON');
     assert.equal(state.loginText, 'Войти');
     assert.ok(state.loginRight <= 390, 'login is clipped by the viewport');
     assert.equal(state.languageVisible, true);

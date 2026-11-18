@@ -2,7 +2,7 @@ import { ChevronDown, ChevronRight, Ellipsis, FileText, FolderKanban, Languages,
 import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { Logo } from './Logo';
-import { SessionAccountLink } from './SessionAccountLink';
+import { SessionAccountControl } from './SessionAccountControl';
 
 const navigationItems = [
   { label: 'Услуги', to: '/services' },
@@ -37,7 +37,7 @@ const languageOptions = [
   { code: 'VI', name: 'Tiếng Việt' },
 ];
 
-export function Header({ authSession, onOpenContacts, cartCount = 0 }) {
+export function Header({ authSession, onOpenAuth, onOpenContacts, onSessionChange, cartCount = 0 }) {
   const navigate = useNavigate();
   const [isCatalogOpen, setIsCatalogOpen] = useState(false);
   const [isLanguageOpen, setIsLanguageOpen] = useState(false);
@@ -186,7 +186,7 @@ export function Header({ authSession, onOpenContacts, cartCount = 0 }) {
             <button className="header__search-button" type="submit" aria-label="Найти"><Search size={22} strokeWidth={2} /></button>
           </form>
           <div className="header__actions">
-            <SessionAccountLink className="header__login" session={authSession} />
+            <SessionAccountControl buttonClassName="header__login" onOpenAuth={onOpenAuth} onSessionChange={onSessionChange} session={authSession} />
             <div className="header__language">
               <button className="header__language-button" type="button" aria-expanded={isLanguageOpen} onClick={() => setIsLanguageOpen((value) => !value)}><Languages size={19} strokeWidth={2} /><span>{activeLanguage.code}</span><ChevronDown className={`header__language-chevron ${isLanguageOpen ? 'header__language-chevron--open' : ''}`} size={16} strokeWidth={2.4} /></button>
               {languageMenu}
@@ -197,7 +197,7 @@ export function Header({ authSession, onOpenContacts, cartCount = 0 }) {
             <button className="header__mobile-language-button" type="button" aria-label="Выбрать язык" aria-expanded={isLanguageOpen} onClick={() => { setIsLanguageOpen((value) => !value); setIsSearchOpen(false); setIsMoreOpen(false); }}><span>{activeLanguage.code}</span><ChevronDown className={`header__language-chevron ${isLanguageOpen ? 'header__language-chevron--open' : ''}`} size={14} strokeWidth={2.4} /></button>
             {languageMenu}
           </div>
-          <SessionAccountLink className="header__mobile-login" compact session={authSession} />
+          <SessionAccountControl buttonClassName="header__mobile-login" compact onOpenAuth={onOpenAuth} onSessionChange={onSessionChange} session={authSession} />
         </div>
       </div>
       <div className="header__navigation-wrapper">

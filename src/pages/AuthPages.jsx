@@ -1,17 +1,11 @@
-import { Check, Eye, EyeOff, RefreshCw } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { Link, useOutletContext, useSearchParams } from 'react-router-dom';
-import { AuthTabs } from '../components/AuthTabs';
-import { TurnstileField } from '../components/TurnstileField';
+import { Link, useSearchParams } from 'react-router-dom';
+import { FormMessage, PasswordGuide, PasswordInput } from '../components/AuthFormFields';
 import { authRequest } from '../lib/auth-api';
-import { getAccountUrl } from '../lib/site-urls';
-import {
-  generatePassword,
-  getPasswordRequirements,
-  getPasswordStrength,
-} from '../utils/password';
+import { generatePassword } from '../utils/password';
 
-function AuthLayout({ title, description, children, tabs = false }) {
+function AuthLayout({ title, description, children }) {
   return (
     <main className="auth-page">
       <section className="auth-page__visual">
@@ -26,7 +20,6 @@ function AuthLayout({ title, description, children, tabs = false }) {
       </section>
       <section className="auth-page__form-wrap">
         <div className="auth-page__form">
-          {tabs ? <AuthTabs /> : <span className="auth-page__eyebrow">Личный кабинет</span>}
           <h2>{title}</h2>
           <p>{description}</p>
           {children}
@@ -36,244 +29,11 @@ function AuthLayout({ title, description, children, tabs = false }) {
   );
 }
 
-function PasswordInput({ autoComplete, name, value, onChange, label = 'Пароль', labelAction }) {
-  const [visible, setVisible] = useState(false);
-
-  return (
-    <div className="auth-form__field">
-      <label htmlFor={name}>{label}</label>
-      <span className="auth-form__password">
-        <input
-          autoComplete={autoComplete}
-          maxLength={128}
-          minLength={12}
-          id={name}
-          name={name}
-          onChange={onChange}
-          required
-          type={visible ? 'text' : 'password'}
-          value={value}
-        />
-        <button
-          aria-label={visible ? 'Скрыть пароль' : 'Показать пароль'}
-          onClick={() => setVisible((current) => !current)}
-          type="button"
-        >
-          {visible ? <EyeOff size={18} /> : <Eye size={18} />}
-        </button>
-      </span>
-      {labelAction && <span className="auth-form__field-action">{labelAction}</span>}
-    </div>
-  );
-}
-
-function PasswordGuide({ password, onGenerate }) {
-  const strength = getPasswordStrength(password);
-  const requirements = getPasswordRequirements(password);
-  const meetsAllRequirements = Object.values(requirements).every(Boolean);
-  const hint = !requirements.length
-    ? 'Минимум 12 символов.'
-    : meetsAllRequirements
-      ? 'Пароль соответствует требованиям.'
-      : 'Добавьте заглавную букву, цифру и символ для усиления.';
-
-  return (
-    <div className="password-guide">
-      <div className="password-guide__heading">
-        <span>Надёжность: {strength.label}</span>
-        <button onClick={onGenerate} type="button">
-          <RefreshCw size={14} />Сгенерировать
-        </button>
-      </div>
-      <div className="password-guide__meter" aria-hidden="true">
-        {[1, 2, 3, 4].map((level) => (
-          <span
-            className={strength.level >= level ? 'password-guide__bar password-guide__bar--active' : 'password-guide__bar'}
-            key={level}
-          />
-        ))}
-      </div>
-      <p className="password-guide__hint">{hint}</p>
-    </div>
-  );
-}
-
-function FormMessage({ error, message }) {
-  if (!error && !message) return null;
-  return (
-    <p className={error ? 'auth-form__message auth-form__message--error' : 'auth-form__message auth-form__message--success'} role="status">
-      {error || message}
-    </p>
-  );
-}
-
-function AuthEntryGate({ children }) {
-  const { authSession } = useOutletContext();
-
-  if (authSession.status === 'loading') {
-    return (
-      <AuthLayout title="Проверяем вход" description="Сверяем действующую сессию личного кабинета.">
-        <div className="auth-session-state" role="status"><span className="auth-session-state__loader" />Проверяем доступ…</div>
-      </AuthLayout>
-    );
-  }
-
-  if (authSession.status === 'authorized') {
-    const firstName = authSession.user?.firstName;
-    return (
-      <AuthLayout title={firstName ? `${firstName}, вы уже вошли` : 'Вы уже вошли'} description="Повторный вход и регистрация не нужны — ваша сессия активна.">
-        <div className="auth-session-state auth-session-state--authorized">
-          <Check size={22} />
-          <span>Личный кабинет готов к работе.</span>
-        </div>
-        <a className="ui-button ui-button--primary auth-session-state__action" href={getAccountUrl('/account')} rel="noreferrer" target="_blank">Открыть личный кабинет</a>
-      </AuthLayout>
-    );
-  }
-
-  return children;
-}
-
 function InvalidResetLink() {
   return (
     <AuthLayout title="Ссылка недействительна" description="В адресе нет кода восстановления. Запросите новое письмо и откройте ссылку из него целиком.">
       <div className="auth-session-state auth-session-state--invalid">Поля нового пароля доступны только по персональной ссылке из письма.</div>
-      <Link className="ui-button ui-button--primary auth-session-state__action" to="/forgot-password">Запросить новую ссылку</Link>
-    </AuthLayout>
-  );
-}
-
-export function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [pending, setPending] = useState(false);
-  const [turnstileToken, setTurnstileToken] = useState('');
-  const [website, setWebsite] = useState('');
-  const [challengeKey, setChallengeKey] = useState(0);
-
-  const submit = async (event) => {
-    event.preventDefault();
-    setError('');
-    setPending(true);
-    try {
-      await authRequest('/login', {
-        method: 'POST',
-        body: JSON.stringify({ email, password, turnstileToken, website }),
-      });
-      window.location.assign(getAccountUrl('/account'));
-    } catch (requestError) {
-      setError(requestError.message);
-      setTurnstileToken('');
-      setChallengeKey((current) => current + 1);
-    } finally {
-      setPending(false);
-    }
-  };
-
-  return (
-    <AuthEntryGate><AuthLayout tabs title="Вход" description="Введите email и пароль, указанные при регистрации.">
-      <form className="auth-form" onSubmit={submit}>
-        <label className="auth-form__field">
-          <span>Email</span>
-          <input autoComplete="email" inputMode="email" name="email" onChange={(event) => setEmail(event.target.value)} required type="email" value={email} />
-        </label>
-        <PasswordInput autoComplete="current-password" labelAction={<Link to="/forgot-password">Забыли пароль?</Link>} name="password" onChange={(event) => setPassword(event.target.value)} value={password} />
-        <TurnstileField action="login" onVerify={setTurnstileToken} onWebsiteChange={(event) => setWebsite(event.target.value)} resetKey={challengeKey} website={website} />
-        <FormMessage error={error} />
-        <button className="ui-button ui-button--primary auth-form__submit" disabled={pending || !turnstileToken} type="submit">
-          {pending ? 'Входим…' : 'Войти'}
-        </button>
-      </form>
-    </AuthLayout></AuthEntryGate>
-  );
-}
-
-export function RegisterPage() {
-  const [form, setForm] = useState({ firstName: '', email: '', password: '', confirmation: '' });
-  const [result, setResult] = useState({ error: '', message: '' });
-  const [pending, setPending] = useState(false);
-  const [turnstileToken, setTurnstileToken] = useState('');
-  const [website, setWebsite] = useState('');
-  const [challengeKey, setChallengeKey] = useState(0);
-  const update = (event) => setForm((current) => ({ ...current, [event.target.name]: event.target.value }));
-  const generate = () => {
-    const password = generatePassword();
-    setForm((current) => ({ ...current, password, confirmation: password }));
-  };
-
-  const submit = async (event) => {
-    event.preventDefault();
-    if (form.password !== form.confirmation) {
-      setResult({ error: 'Пароли не совпадают', message: '' });
-      return;
-    }
-    setPending(true);
-    setResult({ error: '', message: '' });
-    try {
-      const response = await authRequest('/register', {
-        method: 'POST',
-        body: JSON.stringify({ firstName: form.firstName, email: form.email, password: form.password, turnstileToken, website }),
-      });
-      setResult({ error: '', message: response.message });
-    } catch (requestError) {
-      setResult({ error: requestError.message, message: '' });
-      setTurnstileToken('');
-      setChallengeKey((current) => current + 1);
-    } finally {
-      setPending(false);
-    }
-  };
-
-  return (
-    <AuthEntryGate><AuthLayout tabs title="Регистрация" description="Создайте аккаунт и подтвердите email по ссылке из письма.">
-      <form className="auth-form" onSubmit={submit}>
-        <label className="auth-form__field"><span>Имя</span><input autoComplete="given-name" maxLength={80} name="firstName" onChange={update} value={form.firstName} /></label>
-        <label className="auth-form__field"><span>Email</span><input autoComplete="email" inputMode="email" name="email" onChange={update} required type="email" value={form.email} /></label>
-        <PasswordInput autoComplete="new-password" name="password" onChange={update} value={form.password} />
-        <PasswordGuide onGenerate={generate} password={form.password} />
-        <PasswordInput autoComplete="new-password" label="Повторите пароль" name="confirmation" onChange={update} value={form.confirmation} />
-        <TurnstileField action="register" onVerify={setTurnstileToken} onWebsiteChange={(event) => setWebsite(event.target.value)} resetKey={challengeKey} website={website} />
-        <FormMessage error={result.error} message={result.message} />
-        <button className="ui-button ui-button--primary auth-form__submit" disabled={pending || !turnstileToken} type="submit">{pending ? 'Создаём аккаунт…' : 'Создать аккаунт'}</button>
-      </form>
-    </AuthLayout></AuthEntryGate>
-  );
-}
-
-export function ForgotPasswordPage() {
-  const [email, setEmail] = useState('');
-  const [result, setResult] = useState({ error: '', message: '' });
-  const [pending, setPending] = useState(false);
-  const [turnstileToken, setTurnstileToken] = useState('');
-  const [website, setWebsite] = useState('');
-  const [challengeKey, setChallengeKey] = useState(0);
-
-  const submit = async (event) => {
-    event.preventDefault();
-    setPending(true);
-    setResult({ error: '', message: '' });
-    try {
-      const response = await authRequest('/forgot-password', { method: 'POST', body: JSON.stringify({ email, turnstileToken, website }) });
-      setResult({ error: '', message: response.message });
-    } catch (requestError) {
-      setResult({ error: requestError.message, message: '' });
-      setTurnstileToken('');
-      setChallengeKey((current) => current + 1);
-    } finally {
-      setPending(false);
-    }
-  };
-
-  return (
-    <AuthLayout title="Восстановление доступа" description="Отправим одноразовую ссылку для смены пароля на вашу почту.">
-      <form className="auth-form" onSubmit={submit}>
-        <label className="auth-form__field"><span>Email</span><input autoComplete="email" inputMode="email" onChange={(event) => setEmail(event.target.value)} required type="email" value={email} /></label>
-        <TurnstileField action="forgot_password" onVerify={setTurnstileToken} onWebsiteChange={(event) => setWebsite(event.target.value)} resetKey={challengeKey} website={website} />
-        <FormMessage error={result.error} message={result.message} />
-        <button className="ui-button ui-button--primary auth-form__submit" disabled={pending || !turnstileToken} type="submit">{pending ? 'Отправляем…' : 'Получить ссылку'}</button>
-      </form>
-      <div className="auth-page__links"><Link to="/login">Вернуться ко входу</Link></div>
+      <Link className="ui-button ui-button--primary auth-session-state__action" to="/?auth=forgot">Запросить новую ссылку</Link>
     </AuthLayout>
   );
 }
@@ -294,7 +54,6 @@ export function ResetPasswordPage() {
 
   const submit = async (event) => {
     event.preventDefault();
-    if (!token) return setResult({ error: 'В ссылке отсутствует код восстановления', message: '' });
     if (form.password !== form.confirmation) return setResult({ error: 'Пароли не совпадают', message: '' });
     setPending(true);
     setResult({ error: '', message: '' });
@@ -313,11 +72,11 @@ export function ResetPasswordPage() {
       <form className="auth-form" onSubmit={submit}>
         <PasswordInput autoComplete="new-password" label="Новый пароль" name="password" onChange={update} value={form.password} />
         <PasswordGuide onGenerate={generate} password={form.password} />
-        <PasswordInput autoComplete="new-password" label="Повторите пароль" name="confirmation" onChange={update} value={form.confirmation} />
+        <PasswordInput autoComplete="new-password" label="Повторите новый пароль" name="confirmation" onChange={update} value={form.confirmation} />
         <FormMessage error={result.error} message={result.message} />
         <button className="ui-button ui-button--primary auth-form__submit" disabled={pending} type="submit">{pending ? 'Сохраняем…' : 'Сохранить пароль'}</button>
       </form>
-      <div className="auth-page__links"><Link to="/login">Перейти ко входу</Link></div>
+      <div className="auth-page__links"><Link to="/?auth=login">Перейти ко входу</Link></div>
     </AuthLayout>
   );
 }
@@ -343,7 +102,7 @@ export function VerifyEmailPage() {
   return (
     <AuthLayout title="Подтверждение email" description="Проверяем одноразовую ссылку из письма.">
       <div className="auth-form auth-form--status"><FormMessage error={result.error} message={result.message} /></div>
-      <div className="auth-page__links"><Link to="/login">Перейти ко входу</Link></div>
+      <div className="auth-page__links"><Link to="/?auth=login">Перейти ко входу</Link></div>
     </AuthLayout>
   );
 }

@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { AuthModal } from './AuthModal';
 import { ContactModal } from './ContactModal';
 import { CookieConsent } from './CookieConsent';
 import { Footer } from './Footer';
@@ -32,11 +33,13 @@ const pageMeta = [
 
 export function SiteLayout() {
   const location = useLocation();
-  const isAuthPage = /^\/(login|register|forgot-password|reset-password|verify-email)$/.test(location.pathname);
+  const navigate = useNavigate();
+  const isAuthPage = /^\/(reset-password|verify-email)$/.test(location.pathname);
   const previousPathnameRef = useRef(null);
   const [isContactsOpen, setIsContactsOpen] = useState(false);
   const [contactSubject, setContactSubject] = useState('');
   const [authSession, setAuthSession] = useState({ status: 'loading', user: null });
+  const [authModalMode, setAuthModalMode] = useState(null);
   const [cartItems, setCartItems] = useState(() => {
     const savedCart = window.localStorage.getItem('devmarket-cart');
     return savedCart ? JSON.parse(savedCart) : [];
@@ -51,6 +54,11 @@ export function SiteLayout() {
       active = false;
     };
   }, []);
+
+  useEffect(() => {
+    const requestedMode = new URLSearchParams(location.search).get('auth');
+    if (['login', 'register', 'forgot'].includes(requestedMode)) setAuthModalMode(requestedMode);
+  }, [location.search]);
 
   useEffect(() => {
     const previousPathname = previousPathnameRef.current;
@@ -104,14 +112,27 @@ export function SiteLayout() {
     setContactSubject(typeof subject === 'string' ? subject : '');
     setIsContactsOpen(true);
   };
+  const openAuthModal = useCallback((mode = 'login') => setAuthModalMode(mode), []);
+  const closeAuthModal = useCallback(() => {
+    setAuthModalMode(null);
+    const params = new URLSearchParams(location.search);
+    if (!params.has('auth')) return;
+    params.delete('auth');
+    navigate({ pathname: location.pathname, search: params.toString() ? `?${params}` : '' }, { replace: true });
+  }, [location.pathname, location.search, navigate]);
+  const completeLogin = useCallback((user) => {
+    setAuthSession({ status: 'authorized', user });
+    closeAuthModal();
+  }, [closeAuthModal]);
 
   return (
     <>
-      <Header authSession={authSession} onOpenContacts={openContacts} cartCount={cartCount} />
-      <Outlet context={{ addToCart, authSession, cartItems, clearCart, onOpenContacts: openContacts, updateCartItem }} />
+      <Header authSession={authSession} onOpenAuth={openAuthModal} onOpenContacts={openContacts} onSessionChange={setAuthSession} cartCount={cartCount} />
+      <Outlet context={{ addToCart, authSession, cartItems, clearCart, onOpenAuth: openAuthModal, onOpenContacts: openContacts, updateCartItem }} />
       {location.pathname !== '/' && !isAuthPage && <TrustBand />}
       {!isAuthPage && <Footer onOpenContacts={openContacts} />}
       <ContactModal isOpen={isContactsOpen} onClose={() => setIsContactsOpen(false)} subject={contactSubject} />
+      <AuthModal initialMode={authModalMode || 'login'} isOpen={Boolean(authModalMode)} onAuthenticated={completeLogin} onClose={closeAuthModal} />
       <CookieConsent />
     </>
   );

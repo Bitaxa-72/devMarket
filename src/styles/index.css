@@ -267,6 +267,70 @@ a {
   transform: translateY(1px);
 }
 
+.header__account {
+  position: relative;
+}
+
+.header__account-email {
+  max-width: 190px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.header__account-chevron {
+  flex: 0 0 auto;
+  transition: transform .2s ease;
+}
+
+.header__account-chevron--open {
+  transform: rotate(180deg);
+}
+
+.header__account-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 30;
+  display: grid;
+  width: 210px;
+  padding: 7px;
+  border: 1px solid #e1e5ea;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 14px 36px rgb(32 36 52 / 14%);
+}
+
+.header__account-menu a,
+.header__account-menu button {
+  display: flex;
+  min-height: 42px;
+  align-items: center;
+  gap: 9px;
+  padding: 0 11px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #596273;
+  font-size: 12px;
+  font-weight: 800;
+  text-align: left;
+}
+
+.header__account-menu a:hover,
+.header__account-menu a:focus-visible,
+.header__account-menu button:hover,
+.header__account-menu button:focus-visible {
+  background: #f1f8e7;
+  color: #5f9019;
+  outline: 0;
+}
+
+.header__account-menu button:disabled {
+  cursor: wait;
+  opacity: .6;
+}
+
 .header__contact {
   display: inline-flex;
   align-items: center;
@@ -321,6 +385,7 @@ a {
 }
 
 .header__mobile-login,
+.header__mobile-account,
 .header__mobile-language,
 .header__mobile-search-toggle { display: none; }
 
@@ -1135,7 +1200,7 @@ a {
   .header__mobile-login {
     display: inline-flex;
     min-width: 68px;
-    height: 36px;
+    height: 44px;
     align-items: center;
     justify-content: center;
     gap: 6px;
@@ -1146,6 +1211,21 @@ a {
     color: #6e9e21;
     font-size: 12px;
     font-weight: 900;
+  }
+
+  .header__mobile-account {
+    position: relative;
+    display: block;
+    min-width: 0;
+  }
+
+  .header__mobile-account .header__account-email {
+    max-width: 92px;
+  }
+
+  .header__mobile-account .header__account-menu {
+    top: calc(100% + 9px);
+    width: 190px;
   }
 
   .header__mobile-login:hover,

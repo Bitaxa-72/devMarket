@@ -3,13 +3,7 @@ import { AccountLayout } from './components/AccountLayout';
 import { SiteLayout } from './components/SiteLayout';
 import { RequireAuth } from './components/RequireAuth';
 import { AccountOrderPage, AccountPage, AccountPaymentPage } from './pages/AccountPages';
-import {
-  ForgotPasswordPage,
-  LoginPage,
-  RegisterPage,
-  ResetPasswordPage,
-  VerifyEmailPage,
-} from './pages/AuthPages';
+import { ResetPasswordPage, VerifyEmailPage } from './pages/AuthPages';
 import { CatalogPage, ProductPage, ServicesPage } from './pages/CatalogPages';
 import { CartPage, CheckoutPage, CheckoutSuccessPage, PaymentPage } from './pages/CommercePages';
 import { ArticlePage, NewsPage, ProjectPage, ProjectsPage, PromotionsPage } from './pages/ContentPages';
@@ -66,9 +60,9 @@ function PublicRoutes() {
         <Route path="checkout" element={<CheckoutPage />} />
         <Route path="checkout/success" element={<CheckoutSuccessPage />} />
         <Route path="account/*" element={<ExternalAccountRedirect path="/account" />} />
-        <Route path="login" element={<LoginPage />} />
-        <Route path="register" element={<RegisterPage />} />
-        <Route path="forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="login" element={<Navigate replace to="/?auth=login" />} />
+        <Route path="register" element={<Navigate replace to="/?auth=register" />} />
+        <Route path="forgot-password" element={<Navigate replace to="/?auth=forgot" />} />
         <Route path="reset-password" element={<ResetPasswordPage />} />
         <Route path="verify-email" element={<VerifyEmailPage />} />
         <Route path="search" element={<SearchPage />} />

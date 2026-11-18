@@ -10,7 +10,8 @@ const accountPagesSource = readFileSync(new URL('../src/pages/AccountPages.jsx',
 const commercePagesSource = readFileSync(new URL('../src/pages/CommercePages.jsx', import.meta.url), 'utf8');
 const authPagesSource = readFileSync(new URL('../src/pages/AuthPages.jsx', import.meta.url), 'utf8');
 const siteLayoutSource = readFileSync(new URL('../src/components/SiteLayout.jsx', import.meta.url), 'utf8');
-const sessionLinkSource = readFileSync(new URL('../src/components/SessionAccountLink.jsx', import.meta.url), 'utf8');
+const sessionControlSource = readFileSync(new URL('../src/components/SessionAccountControl.jsx', import.meta.url), 'utf8');
+const authModalSource = readFileSync(new URL('../src/components/AuthModal.jsx', import.meta.url), 'utf8');
 
 test('account hostname uses an isolated account route tree', () => {
   assert.match(appSource, /isAccountHost\(window\.location\.hostname\)/);
@@ -19,24 +20,25 @@ test('account hostname uses an isolated account route tree', () => {
   assert.match(appSource, /<Navigate replace to="\/account" \/>/);
 });
 
-test('public authentication stays on the main website', () => {
-  assert.match(sessionLinkSource, /to="\/login"/);
-  assert.match(appSource, /path="login" element=\{<LoginPage \/>\}/);
-  assert.match(appSource, /path="register" element=\{<RegisterPage \/>\}/);
+test('legacy authentication URLs open modal modes on the main website', () => {
+  assert.match(appSource, /path="login" element=\{<Navigate replace to="\/\?auth=login" \/>\}/);
+  assert.match(appSource, /path="register" element=\{<Navigate replace to="\/\?auth=register" \/>\}/);
+  assert.match(appSource, /path="forgot-password" element=\{<Navigate replace to="\/\?auth=forgot" \/>\}/);
 });
 
 test('public header reflects the shared authenticated session', () => {
   assert.match(siteLayoutSource, /authRequest\('\/me'\)/);
-  assert.match(headerSource, /<SessionAccountLink/);
-  assert.match(sessionLinkSource, /getAccountUrl\('\/account'\)/);
-  assert.match(sessionLinkSource, /target="_blank"/);
-  assert.match(sessionLinkSource, /Личный кабинет/);
+  assert.match(headerSource, /<SessionAccountControl/);
+  assert.match(sessionControlSource, /getAccountUrl\('\/account'\)/);
+  assert.match(sessionControlSource, /target="_blank"/);
+  assert.match(sessionControlSource, /session\.user\.email/);
 });
 
-test('authenticated visitors do not see login or registration forms', () => {
-  assert.match(authPagesSource, /function AuthEntryGate/);
-  assert.match(authPagesSource, /Вы уже вошли/);
-  assert.match(authPagesSource, /Открыть личный кабинет/);
+test('authentication actions share one modal', () => {
+  assert.match(authModalSource, /function LoginForm/);
+  assert.match(authModalSource, /function RegisterForm/);
+  assert.match(authModalSource, /function ForgotPasswordForm/);
+  assert.match(siteLayoutSource, /<AuthModal/);
 });
 
 test('password reset without a token does not render password fields', () => {
@@ -48,8 +50,9 @@ test('authentication redirects preserve email token query parameters', () => {
   assert.match(appSource, /getPublicSiteUrl\(`\$\{path\}\$\{window\.location\.search\}`\)/);
 });
 
-test('successful login continues on the account subdomain', () => {
-  assert.match(authPagesSource, /window\.location\.assign\(getAccountUrl\('\/account'\)\)/);
+test('successful modal login updates the shared session on the public site', () => {
+  assert.match(authModalSource, /onAuthenticated\(response\.user\)/);
+  assert.match(siteLayoutSource, /setAuthSession\(\{ status: 'authorized', user \}\)/);
 });
 
 test('home navigation is rendered before the catalog', () => {

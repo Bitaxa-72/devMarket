@@ -7,7 +7,8 @@
     "dev": "rsbuild dev",
     "build": "rsbuild build",
     "preview": "rsbuild preview",
-    "test": "node --test tests/**/*.test.js tests/account-domain.test.mjs"
+    "test": "node --test tests/**/*.test.js tests/account-domain.test.mjs tests/auth-routes.test.mjs",
+    "test:browser": "node tests/auth-modal.test.mjs && node tests/mobile-header.test.mjs"
   },
   "dependencies": {
     "lucide-react": "latest",

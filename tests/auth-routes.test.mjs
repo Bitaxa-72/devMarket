@@ -4,6 +4,7 @@ import test from 'node:test';
 
 const appSource = readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8');
 const authSource = readFileSync(new URL('../src/pages/AuthPages.jsx', import.meta.url), 'utf8');
+const authModalSource = readFileSync(new URL('../src/components/AuthModal.jsx', import.meta.url), 'utf8');
 const accountShellSource = readFileSync(new URL('../src/components/AccountShell.jsx', import.meta.url), 'utf8');
 
 test('authentication routes and protected account entry are wired', () => {
@@ -14,12 +15,12 @@ test('authentication routes and protected account entry are wired', () => {
 });
 
 test('forms call the backend and expose password-manager hints', () => {
-  assert.match(authSource, /authRequest\('\/login'/);
-  assert.match(authSource, /authRequest\('\/register'/);
-  assert.match(authSource, /authRequest\('\/forgot-password'/);
+  assert.match(authModalSource, /authRequest\('\/login'/);
+  assert.match(authModalSource, /authRequest\('\/register'/);
+  assert.match(authModalSource, /authRequest\('\/forgot-password'/);
   assert.match(authSource, /authRequest\('\/reset-password'/);
-  assert.match(authSource, /autoComplete="current-password"/);
-  assert.match(authSource, /autoComplete="new-password"/);
-  assert.match(authSource, /Сгенерировать/);
+  assert.match(authModalSource, /autoComplete="current-password"/);
+  assert.match(authModalSource, /autoComplete="new-password"/);
+  assert.match(authModalSource, /Создать аккаунт/);
   assert.match(accountShellSource, /authRequest\('\/logout'/);
 });

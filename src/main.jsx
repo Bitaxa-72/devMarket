@@ -5,6 +5,7 @@ import { App } from './App';
 import './styles/index.css';
 import './styles/pages.css';
 import './styles/auth.css';
+import './styles/auth-modal.css';
 import './styles/hero-slider.css';
 
 createRoot(document.getElementById('root')).render(
